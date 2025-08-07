@@ -1,0 +1,44 @@
+#!/bin/bash
+set -euo pipefail
+
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Get the project root directory (parent of scripts directory)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Change to project root directory
+cd "$PROJECT_ROOT"
+
+# Check if resources already exist
+VVMS_DIR="./Example/VOICEVOXExample/lib/vvms"
+DICT_DIR="./Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8"
+
+if [ -d "$VVMS_DIR" ] && [ -d "$DICT_DIR" ]; then
+    echo "VOICEVOX resources already exist, skipping download..."
+    # Check if directories are not empty
+    if [ "$(ls -A "$VVMS_DIR" 2>/dev/null)" ] && [ "$(ls -A "$DICT_DIR" 2>/dev/null)" ]; then
+        echo "VOICEVOX resources verified successfully!"
+        exit 0
+    else
+        echo "VOICEVOX resource directories exist but are empty, proceeding with download..."
+    fi
+fi
+
+echo "Downloading VOICEVOX resources..."
+curl -L https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.0/download-osx-arm64 -o download
+chmod +x download
+
+echo "Extracting VOICEVOX resources..."
+echo -e "y\n" | ./download --output voicevox_resources  --only models
+echo -e "y\n" | ./download --output voicevox_resources  --only dict
+
+echo "Setting up VOICEVOX resources..."
+mkdir -p ./Example/VOICEVOXExample/lib
+cp -r voicevox_resources/models/vvms ./Example/VOICEVOXExample/lib
+cp -r voicevox_resources/dict/open_jtalk_dic_utf_8-1.11 ./Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+
+# Clean up downloaded files
+rm -f download
+rm -rf voicevox_resources
+
+echo "VOICEVOX resources setup complete!"

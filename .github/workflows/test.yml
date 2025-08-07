@@ -1,0 +1,95 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "Sources/**"
+      - "Tests/**"
+      - "Package.swift"
+      - "Example/**"
+      - ".github/workflows/test.yml"
+      - "scripts/**"
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: ["main"]
+    paths:
+      - "Sources/**"
+      - "Tests/**"
+      - "Package.swift"
+      - "Example/**"
+      - ".github/workflows/test.yml"
+      - "scripts/**"
+
+env:
+  DEVELOPER_DIR: "/Applications/Xcode_16.4.app/Contents/Developer"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  test-package:
+    name: Test Package
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s $DEVELOPER_DIR
+
+      - name: Cache VOICEVOX resources
+        id: cache-voicevox
+        uses: actions/cache@v4
+        with:
+          path: |
+            Example/VOICEVOXExample/lib/vvms
+            Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+          key: voicevox-resources-v0.16.0
+
+      - name: Setup VOICEVOX resources
+        if: steps.cache-voicevox.outputs.cache-hit != 'true'
+        run: ./scripts/setup-voicevox-resources.sh
+
+      - name: Debug build environment
+        run: |
+          xcodebuild build -list
+
+      - name: Run Package Tests
+        run: |
+          xcodebuild test \
+            -scheme VOICEVOXTests \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -parallel-testing-enabled NO
+
+  build-example-ios:
+    name: Build Example App (iOS)
+    runs-on: macos-15
+    needs: test-package
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s $DEVELOPER_DIR
+
+      - name: Cache VOICEVOX resources
+        id: cache-voicevox
+        uses: actions/cache@v4
+        with:
+          path: |
+            Example/VOICEVOXExample/lib/vvms
+            Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+          key: voicevox-resources-v0.16.0
+
+      - name: Setup VOICEVOX resources
+        if: steps.cache-voicevox.outputs.cache-hit != 'true'
+        run: ./scripts/setup-voicevox-resources.sh
+
+      - name: Build Example app for iOS
+        working-directory: Example
+        run: |
+          xcodebuild build \
+            -project VOICEVOXExample.xcodeproj \
+            -scheme VOICEVOXExample \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            CODE_SIGN_IDENTITY="-"

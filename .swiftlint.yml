@@ -1,0 +1,132 @@
+# Included/Excluded Paths
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - Tests/*/Resources
+  - "**/*Generated.swift"
+  - "**/*.generated.swift"
+
+# Rules Configuration
+disabled_rules:
+  - todo
+  - trailing_whitespace # handled by SwiftFormat
+  - trailing_comma # against swift-format
+  - opening_brace # against swift-format
+
+analyzer_rules:
+  - unused_declaration
+  - unused_import
+
+opt_in_rules:
+  # Swift API Design Guidelines
+  - explicit_init
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_first_not_nil
+  - empty_count
+  - empty_string
+  - fallthrough
+  - fatal_error_message
+  - first_where
+  - joined_default_parameter
+  - literal_expression_end_indentation
+  - multiline_parameters
+  - operator_usage_whitespace
+  - overridden_super_call
+  - pattern_matching_keywords
+  - prohibited_super_call
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - toggle_bool
+  - trailing_closure
+  - unneeded_parentheses_in_closure_argument
+  - vertical_parameter_alignment_on_call
+  - yoda_condition
+  - shorthand_optional_binding
+  - trailing_newline
+
+  # Performance
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - empty_collection_literal
+  - flatmap_over_map_reduce
+  - reduce_into
+  - last_where
+
+  # Best Practices
+  - array_init
+  - attributes
+  - closure_body_length
+  - convenience_type
+  - discouraged_object_literal
+  - enum_case_associated_values_count
+  - implicit_return
+  - modifier_order
+  - multiline_function_chains
+  - multiline_literal_brackets
+  - multiline_parameters_brackets
+  - prefer_self_type_over_type_of_self
+  - prefer_zero_over_explicit_init
+  - redundant_type_annotation
+  - single_test_class
+  - sorted_imports
+  - static_operator
+  - strong_iboutlet
+  - switch_case_on_newline
+  - unowned_variable_capture
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - weak_delegate
+
+# Rule Configuration
+line_length:
+  warning: 120
+  error: 200
+  ignores_urls: true
+  ignores_function_declarations: false
+  ignores_comments: true
+
+type_body_length:
+  warning: 350
+  error: 500
+
+file_length:
+  warning: 500
+  error: 1000
+
+function_body_length:
+  warning: 40
+  error: 50
+
+function_parameter_count:
+  warning: 5
+  error: 8
+
+type_name:
+  min_length: 3
+  max_length:
+    warning: 50
+    error: 60
+  allowed_symbols: ["_"]
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 40
+    error: 60
+  allowed_symbols: ["_"]
+  validates_start_with_lowercase: error
+
+nesting:
+  type_level: 2
+  function_level: 2
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
