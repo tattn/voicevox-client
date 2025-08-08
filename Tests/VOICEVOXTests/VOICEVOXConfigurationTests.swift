@@ -11,7 +11,6 @@ struct VOICEVOXConfigurationTests {
     )
 
     #expect(config.openJTalkDictionaryURL == URL(fileURLWithPath: "/path/to/dict"))
-    #expect(config.accelerationMode == .auto)
     #expect(config.cpuNumThreads == 0)
   }
 
@@ -19,20 +18,11 @@ struct VOICEVOXConfigurationTests {
   func testCustomConfiguration() {
     let config = VOICEVOXConfiguration(
       openJTalkDictionaryURL: URL(fileURLWithPath: "/custom/path"),
-      accelerationMode: .gpu,
       cpuNumThreads: 4
     )
 
     #expect(config.openJTalkDictionaryURL == URL(fileURLWithPath: "/custom/path"))
-    #expect(config.accelerationMode == .gpu)
     #expect(config.cpuNumThreads == 4)
-  }
-
-  @Test
-  func testAccelerationModeValues() {
-    #expect(VOICEVOXConfiguration.AccelerationMode.auto.rawValue == 0)
-    #expect(VOICEVOXConfiguration.AccelerationMode.cpu.rawValue == 1)
-    #expect(VOICEVOXConfiguration.AccelerationMode.gpu.rawValue == 2)
   }
 
   @Test

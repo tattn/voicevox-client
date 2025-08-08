@@ -44,16 +44,13 @@ enum TestResources {
   /// Creates a standard test configuration with OpenJTalk dictionary.
   ///
   /// - Parameters:
-  ///   - accelerationMode: The acceleration mode to use. Defaults to `.cpu`.
   ///   - cpuNumThreads: The number of CPU threads. Defaults to 2.
   /// - Returns: A configured `VOICEVOXConfiguration` for testing
   static func createTestConfiguration(
-    accelerationMode: VOICEVOXConfiguration.AccelerationMode = .cpu,
     cpuNumThreads: UInt16 = 2
   ) -> VOICEVOXConfiguration {
     VOICEVOXConfiguration(
       openJTalkDictionaryURL: openJTalkURL,
-      accelerationMode: accelerationMode,
       cpuNumThreads: cpuNumThreads
     )
   }

@@ -14,13 +14,6 @@ public struct VOICEVOXConfiguration: Sendable {
   /// The dictionary is required for proper Japanese text processing.
   public let openJTalkDictionaryURL: URL
 
-  /// The acceleration mode to use for inference.
-  ///
-  /// Controls whether to use CPU, GPU, or automatic selection for neural
-  /// network inference. The actual availability depends on the system
-  /// configuration and hardware.
-  public let accelerationMode: AccelerationMode
-
   /// The number of CPU threads to use for inference.
   ///
   /// When set to 0 (default), the engine automatically determines the
@@ -28,48 +21,20 @@ public struct VOICEVOXConfiguration: Sendable {
   /// For manual control, specify the desired thread count.
   public let cpuNumThreads: UInt16
 
-  /// Acceleration modes for VOICEVOX engine inference.
-  ///
-  /// These modes determine how the neural network inference is performed,
-  /// affecting both speed and resource usage.
-  public enum AccelerationMode: UInt32, Sendable, CaseIterable {
-    /// Automatically select the best available acceleration mode.
-    ///
-    /// The engine will detect available hardware and choose the most
-    /// appropriate acceleration method (typically GPU if available,
-    /// falling back to CPU).
-    case auto = 0
-
-    /// Force CPU-only inference.
-    ///
-    /// Use this mode to explicitly run inference on CPU, which may
-    /// be more stable but potentially slower than GPU acceleration.
-    case cpu = 1
-
-    /// Force GPU acceleration if available.
-    ///
-    /// Use this mode to explicitly enable GPU acceleration. If GPU
-    /// acceleration is not available, initialization may fail.
-    case gpu = 2
-  }
-
   /// Creates a new VOICEVOX configuration.
   ///
   /// - Parameters:
   ///   - openJTalkDictionaryURL: The URL to the OpenJTalk dictionary directory.
   ///     This directory must exist and contain valid dictionary files.
-  ///   - accelerationMode: The acceleration mode to use. Defaults to `.auto`.
   ///   - cpuNumThreads: The number of CPU threads to use. Defaults to 0 (auto).
   ///
   /// - Note: The configuration does not validate the dictionary path at creation time.
   ///   Path validation occurs during VOICEVOX initialization.
   public init(
     openJTalkDictionaryURL: URL,
-    accelerationMode: AccelerationMode = .auto,
     cpuNumThreads: UInt16 = 0
   ) {
     self.openJTalkDictionaryURL = openJTalkDictionaryURL
-    self.accelerationMode = accelerationMode
     self.cpuNumThreads = cpuNumThreads
   }
 }

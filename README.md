@@ -1,5 +1,10 @@
 # VOICEVOX iOS Client
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/tattn/voicevox-client/actions/workflows/test.yml/badge.svg)](https://github.com/tattn/voicevox-client/actions/workflows/test.yml)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftattn%2Fvoicevox-client%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/tattn/voicevox-client)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftattn%2Fvoicevox-client%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/tattn/voicevox-client)
+
 An unofficial VOICEVOX client for iOS.
 
 ## Requirements
@@ -28,8 +33,7 @@ import VOICEVOX
 
 // Configure
 let config = VOICEVOXConfiguration(
-    openJTalkDictionaryURL: URL(fileURLWithPath: "/path/to/open_jtalk_dic"),
-    accelerationMode: .auto  // .auto, .cpu, or .gpu
+    openJTalkDictionaryURL: URL(fileURLWithPath: "/path/to/open_jtalk_dic")
 )
 
 // Initialize

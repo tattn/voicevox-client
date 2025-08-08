@@ -10,16 +10,13 @@ final class Synthesizer {
     configuration: VOICEVOXConfiguration
   ) throws(VOICEVOXError) {
     var initializeOptions = voicevox_make_default_initialize_options()
-    initializeOptions.acceleration_mode = VoicevoxAccelerationMode(configuration.accelerationMode.rawValue)
     initializeOptions.cpu_num_threads = configuration.cpuNumThreads
 
     var synthesizer: OpaquePointer?
     let resultCode = voicevox_synthesizer_new(onnxruntime.pointer, openJTalk.pointer, initializeOptions, &synthesizer)
 
     guard resultCode == 0, let synthesizer else {
-      let details =
-        "Failed to create synthesizer with acceleration mode: "
-        + "\(configuration.accelerationMode), threads: \(configuration.cpuNumThreads)"
+      let details = "Failed to create synthesizer with threads: \(configuration.cpuNumThreads)"
       throw .synthesizerCreationFailed(details: details)
     }
 
