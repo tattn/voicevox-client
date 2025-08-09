@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
   name: "voicevox-client",
   platforms: [
-    .iOS(.v16), .macOS(.v13)
+    .iOS(.v16), .macOS(.v13),
   ],
   products: [
     .library(
@@ -22,7 +22,18 @@ let package = Package(
     .testTarget(
       name: "VOICEVOXTests",
       dependencies: ["VOICEVOX"],
-      resources: [.copy("lib")]
+      resources: [.copy("lib")],
+      linkerSettings: [
+        .unsafeFlags(
+          [
+            "-L", "Tests/VOICEVOXTests/lib",
+            "-lvoicevox_core",
+            "-lvoicevox_onnxruntime.1.17.3",
+            "-Xlinker", "-rpath", "-Xlinker", "@loader_path/../Resources/voicevox-client_VOICEVOXTests.bundle/Contents/Resources/lib",
+          ],
+          .when(platforms: [.macOS])
+        )
+      ]
     ),
 
     .target(
@@ -30,7 +41,7 @@ let package = Package(
       dependencies: [
         .target(name: "onnxruntime", condition: .when(platforms: [.iOS])),
         .target(name: "voicevox_core_ios", condition: .when(platforms: [.iOS])),
-        .target(name: "voicevox_core_macos", condition: .when(platforms: [.macOS]))
+        .target(name: "voicevox_core_macos", condition: .when(platforms: [.macOS])),
       ]
     ),
     .target(

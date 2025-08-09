@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import voicevox_core
+import voicevox_common
 
 @testable import VOICEVOX
 

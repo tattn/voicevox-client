@@ -27,8 +27,8 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  test-package:
-    name: Test Package
+  test-package-ios:
+    name: Test Package (iOS)
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -49,10 +49,6 @@ jobs:
         if: steps.cache-voicevox.outputs.cache-hit != 'true'
         run: ./scripts/setup-voicevox-resources.sh
 
-      - name: Debug build environment
-        run: |
-          xcodebuild build -list
-
       - name: Run Package Tests
         run: |
           xcodebuild test \
@@ -62,10 +58,41 @@ jobs:
             -skipMacroValidation \
             -parallel-testing-enabled NO
 
+  test-package-macos:
+    name: Test Package (macOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s $DEVELOPER_DIR
+
+      - name: Cache VOICEVOX resources
+        id: cache-voicevox
+        uses: actions/cache@v4
+        with:
+          path: |
+            Example/VOICEVOXExample/lib/vvms
+            Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+          key: voicevox-resources-v0.16.0
+
+      - name: Setup VOICEVOX resources
+        if: steps.cache-voicevox.outputs.cache-hit != 'true'
+        run: ./scripts/setup-voicevox-resources.sh
+
+      - name: Run Package Tests
+        run: |
+          xcodebuild test \
+            -scheme VOICEVOXTests \
+            -destination 'platform=macOS' \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -parallel-testing-enabled NO
+
   build-example-ios:
     name: Build Example App (iOS)
     runs-on: macos-15
-    needs: test-package
+    needs: [test-package-ios, test-package-macos]
     steps:
       - uses: actions/checkout@v4
 

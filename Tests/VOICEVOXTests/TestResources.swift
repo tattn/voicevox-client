@@ -10,7 +10,7 @@ enum TestResources {
     guard let resourceURL = Bundle.module.resourceURL else {
       fatalError("Unable to find test resources bundle")
     }
-    return resourceURL.appending(component: "lib").path()
+    return resourceURL.appending(component: "lib").absoluteURL.path()
   }
 
   /// The path to the OpenJTalk dictionary directory.
@@ -51,6 +51,7 @@ enum TestResources {
   ) -> VOICEVOXConfiguration {
     VOICEVOXConfiguration(
       openJTalkDictionaryURL: openJTalkURL,
+      onnxruntimeDirectoryURL: Bundle.module.resourceURL!.appending(path: "lib"),
       cpuNumThreads: cpuNumThreads
     )
   }
