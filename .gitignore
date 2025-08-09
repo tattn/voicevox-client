@@ -125,4 +125,3 @@ iOSInjectionProject/
 .claude
 scripts/*
 !scripts/setup-voicevox-resources.sh
-Example/VOICEVOXExample/lib/*
