@@ -7,17 +7,38 @@
 
 An unofficial VOICEVOX client for iOS.
 
-## Requirements
+## Setup
 
-You need to provide and save the resources in `./Example/VOICEVOXExample/lib`:
+### Automatic Setup
 
+Run the setup script to automatically download and configure all required resources:
+
+```bash
+./scripts/setup-voicevox-resources.sh
+```
+
+This script will download and set up:
+- **VOICEVOX Core library** (`libvoicevox_core.dylib`)
+- **ONNX Runtime library** (`libvoicevox_onnxruntime.dylib`)
+- **Open JTalk dictionary** - Japanese text analysis dictionary
+- **VVM files** - VOICEVOX voice model files
+
+<details>
+<summary><h3>Manual Setup</h3></summary>
+
+If you prefer manual setup, you need to provide and save the resources in `./Example/VOICEVOXExample/lib`:
+
+- **VOICEVOX Core library** (`libvoicevox_core.dylib`)
+- **ONNX Runtime library** (`libvoicevox_onnxruntime.1.17.3.dylib`)
 - **Open JTalk dictionary** - Japanese text analysis dictionary
 - **VVM files** - VOICEVOX voice model files
 
 ```
 lib
+├── libvoicevox_core.dylib
+├── libvoicevox_onnxruntime.1.17.3.dylib
 ├── open_jtalk_dic_utf_8
-│   ├── char.bin
+│   ├── char.bin
 │   └── ...
 └── vvms
     ├── 0.vvm
@@ -25,6 +46,8 @@ lib
 ```
 
 Refer to the [VOICEVOX documentation](https://github.com/VOICEVOX/voicevox_core/blob/main/docs/guide/user/downloader.md) for details.
+
+</details>
 
 ## Quick Start
 

@@ -1,5 +1,5 @@
 import Foundation
-import voicevox_core
+import voicevox_common
 
 /// Configuration settings for initializing the VOICEVOX engine.
 ///
@@ -14,6 +14,14 @@ public struct VOICEVOXConfiguration: Sendable {
   /// The dictionary is required for proper Japanese text processing.
   public let openJTalkDictionaryURL: URL
 
+  /// The URL to the OnnxRuntime's dylib directory.
+  ///
+  /// This directory contains the necessary dynamic libraries for
+  /// running neural network inference. It is required for the VOICEVOX engine
+  /// to function correctly.
+  /// - Note: This url is used only on macOS.
+  public let onnxruntimeDirectoryURL: URL
+
   /// The number of CPU threads to use for inference.
   ///
   /// When set to 0 (default), the engine automatically determines the
@@ -26,15 +34,19 @@ public struct VOICEVOXConfiguration: Sendable {
   /// - Parameters:
   ///   - openJTalkDictionaryURL: The URL to the OpenJTalk dictionary directory.
   ///     This directory must exist and contain valid dictionary files.
+  ///   - onnxruntimeDirectoryURL: The URL to the OnnxRuntime directory.
+  ///     This is used only on macOS to locate the OnnxRuntime dynamic libraries.
   ///   - cpuNumThreads: The number of CPU threads to use. Defaults to 0 (auto).
   ///
   /// - Note: The configuration does not validate the dictionary path at creation time.
   ///   Path validation occurs during VOICEVOX initialization.
   public init(
     openJTalkDictionaryURL: URL,
+    onnxruntimeDirectoryURL: URL = Bundle.main.bundleURL.appending(path: "Contents/Frameworks"),
     cpuNumThreads: UInt16 = 0
   ) {
     self.openJTalkDictionaryURL = openJTalkDictionaryURL
+    self.onnxruntimeDirectoryURL = onnxruntimeDirectoryURL
     self.cpuNumThreads = cpuNumThreads
   }
 }

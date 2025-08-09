@@ -1,5 +1,5 @@
 import Foundation
-import voicevox_core
+import voicevox_common
 
 public struct VoiceModelID: Equatable, Hashable, Sendable {
   // swiftlint:disable:next large_tuple
@@ -60,11 +60,11 @@ final class VoiceModelFile {
 
   init(url: URL) throws(VOICEVOXError) {
     var voiceModelFile: OpaquePointer?
-    let openResultCode = voicevox_voice_model_file_open(url.path(), &voiceModelFile)
+    let openResultCode = voicevox_voice_model_file_open(url.absoluteURL.path(), &voiceModelFile)
 
     guard openResultCode == 0, let voiceModelFile else {
       throw .voiceModelLoadFailed(
-        path: url.path(),
+        path: url.absoluteURL.path(),
         reason: "Failed to open voice model file (error code: \(openResultCode))"
       )
     }

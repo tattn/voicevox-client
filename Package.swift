@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
   name: "voicevox-client",
   platforms: [
-    .iOS(.v16)
+    .iOS(.v16), .macOS(.v13)
   ],
   products: [
     .library(
@@ -17,10 +17,7 @@ let package = Package(
   targets: [
     .target(
       name: "VOICEVOX",
-      dependencies: [
-        "onnxruntime",
-        "voicevox_core",
-      ]
+      dependencies: ["voicevox_common"]
     ),
     .testTarget(
       name: "VOICEVOXTests",
@@ -28,6 +25,17 @@ let package = Package(
       resources: [.copy("lib")]
     ),
 
+    .target(
+      name: "voicevox_common",
+      dependencies: [
+        .target(name: "onnxruntime", condition: .when(platforms: [.iOS])),
+        .target(name: "voicevox_core_ios", condition: .when(platforms: [.iOS])),
+        .target(name: "voicevox_core_macos", condition: .when(platforms: [.macOS]))
+      ]
+    ),
+    .target(
+      name: "voicevox_core_macos"
+    ),
     .binaryTarget(
       name: "onnxruntime",
       url:
@@ -35,7 +43,7 @@ let package = Package(
       checksum: "5b0138f25e68c3fb99771d37978837d5038a67b0720f96d912c900887164494b"
     ),
     .binaryTarget(
-      name: "voicevox_core",
+      name: "voicevox_core_ios",
       url: "https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.0/voicevox_core-ios-xcframework-cpu-0.16.0.zip",
       checksum: "2cc4d209d594f7815b87348c2157635fa9288d2e2cd8c342887ee68442ba2ee1"
     ),

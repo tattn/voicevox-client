@@ -23,7 +23,8 @@ final class ViewModel {
     let modelURL = resourceURL.appending(path: "lib/vvms/0.vvm")
 
     let config = VOICEVOXConfiguration(
-      openJTalkDictionaryURL: openJTalkURL
+      openJTalkDictionaryURL: openJTalkURL,
+      onnxruntimeDirectoryURL: resourceURL.appending(path: "lib"),
     )
     do {
       let synthesizer = try await VOICEVOXSynthesizer(configuration: config)

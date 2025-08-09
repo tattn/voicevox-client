@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		066876BE2E47DD9400948457 /* libvoicevox_core.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 066876BD2E47DD9400948457 /* libvoicevox_core.dylib */; platformFilters = (macos, ); };
 		06E7DE8F2E435F9700C6026D /* VOICEVOX in Frameworks */ = {isa = PBXBuildFile; productRef = 06E7DE8E2E435F9700C6026D /* VOICEVOX */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		066876BD2E47DD9400948457 /* libvoicevox_core.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvoicevox_core.dylib; path = VOICEVOXExample/lib/libvoicevox_core.dylib; sourceTree = "<group>"; };
 		06E7DE662E435ADA00C6026D /* VOICEVOXExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VOICEVOXExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		06E7DE862E435F3800C6026D /* voicevox-client */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "voicevox-client"; path = ../; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -44,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				066876BE2E47DD9400948457 /* libvoicevox_core.dylib in Frameworks */,
 				06E7DE8F2E435F9700C6026D /* VOICEVOX in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -72,6 +75,7 @@
 		06E7DE8D2E435F9700C6026D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				066876BD2E47DD9400948457 /* libvoicevox_core.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -296,11 +300,19 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
+					"@executable_path/../Resources/lib",
 				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/VOICEVOXExample/lib";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.tattn.VOICEVOXExample${SAMPLE_CODE_DISAMBIGUATOR}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -327,11 +339,19 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
+					"@executable_path/../Resources/lib",
 				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/VOICEVOXExample/lib";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.tattn.VOICEVOXExample${SAMPLE_CODE_DISAMBIGUATOR}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

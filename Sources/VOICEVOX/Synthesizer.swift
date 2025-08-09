@@ -1,4 +1,4 @@
-import voicevox_core
+import voicevox_common
 
 /// Wrapper for Synthesizer.
 final class Synthesizer {

@@ -1,5 +1,5 @@
 import Foundation
-import voicevox_core
+import voicevox_common
 
 /// The main synthesizer that provides thread-safe access to VOICEVOX TTS operations.
 ///
@@ -39,7 +39,11 @@ public actor VOICEVOXSynthesizer {
   public init(configuration: VOICEVOXConfiguration) async throws(VOICEVOXError) {
     // Initialize resources in the required dependency order
     // Each wrapper handles its own C resource cleanup in deinit
+#if os(iOS)
     self.onnxruntime = try OnnxRuntime()
+#else
+    self.onnxruntime = try OnnxRuntime(url: configuration.onnxruntimeDirectoryURL)
+#endif
     self.openJTalk = try OpenJTalk(dictionaryURL: configuration.openJTalkDictionaryURL)
     self.synthesizer = try Synthesizer(
       onnxruntime: onnxruntime,

@@ -1,12 +1,12 @@
 import Foundation
-import voicevox_core
+import voicevox_common
 
 /// Wrapper for OpenJTalk.
 final class OpenJTalk {
   let pointer: OpaquePointer
 
   init(dictionaryURL: URL) throws(VOICEVOXError) {
-    let dictionaryPath = dictionaryURL.path()
+    let dictionaryPath = dictionaryURL.absoluteURL.path()
 
     // Attempt to create the OpenJTalk resource
     var openJTalk: OpaquePointer?
