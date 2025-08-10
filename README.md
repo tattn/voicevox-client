@@ -1,13 +1,13 @@
-# VOICEVOX iOS Client
+# VOICEVOX Client for iOS and macOS
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/tattn/voicevox-client/actions/workflows/test.yml/badge.svg)](https://github.com/tattn/voicevox-client/actions/workflows/test.yml)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftattn%2Fvoicevox-client%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/tattn/voicevox-client)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftattn%2Fvoicevox-client%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/tattn/voicevox-client)
 
-An unofficial VOICEVOX client for iOS.
+An unofficial VOICEVOX client for iOS and macOS.
 
-## Setup
+## Setup for the example app
 
 ### Automatic Setup
 
@@ -18,6 +18,7 @@ Run the setup script to automatically download and configure all required resour
 ```
 
 This script will download and set up:
+
 - **VOICEVOX Core library** (`libvoicevox_core.dylib`)
 - **ONNX Runtime library** (`libvoicevox_onnxruntime.dylib`)
 - **Open JTalk dictionary** - Japanese text analysis dictionary
@@ -50,6 +51,19 @@ Refer to the [VOICEVOX documentation](https://github.com/VOICEVOX/voicevox_core/
 </details>
 
 ## Quick Start
+
+The API documentation is available [here](https://tattn.github.io/voicevox-client/documentation/voicevox).
+
+You need to download the required resources:
+
+- `open_jtalk_dic`
+- `.vvm` files
+- `libvoicevox_core.dylib` (macOS only)
+- `libvoicevox_onnxruntime.dylib` (macOS only)
+
+All files must be included in your application bundle.
+
+For detailed setup instructions, see the [VOICEVOX documentation](https://github.com/VOICEVOX/voicevox_core/blob/main/docs/guide/user/usage.md).
 
 ```swift
 import VOICEVOX

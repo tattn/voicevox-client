@@ -43,6 +43,7 @@ jobs:
           path: |
             Example/VOICEVOXExample/lib/vvms
             Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+            Example/VOICEVOXExample/lib/*.dylib
           key: voicevox-resources-v0.16.0
 
       - name: Setup VOICEVOX resources
@@ -74,6 +75,7 @@ jobs:
           path: |
             Example/VOICEVOXExample/lib/vvms
             Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+            Example/VOICEVOXExample/lib/*.dylib
           key: voicevox-resources-v0.16.0
 
       - name: Setup VOICEVOX resources
@@ -106,6 +108,7 @@ jobs:
           path: |
             Example/VOICEVOXExample/lib/vvms
             Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+            Example/VOICEVOXExample/lib/*.dylib
           key: voicevox-resources-v0.16.0
 
       - name: Setup VOICEVOX resources

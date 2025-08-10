@@ -14,6 +14,9 @@ let package = Package(
       targets: ["VOICEVOX"]
     )
   ],
+  dependencies: [
+    .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.4.0")
+  ],
   targets: [
     .target(
       name: "VOICEVOX",
