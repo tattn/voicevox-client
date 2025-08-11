@@ -53,8 +53,8 @@ let package = Package(
     .binaryTarget(
       name: "onnxruntime",
       url:
-        "https://github.com/VOICEVOX/onnxruntime-builder/releases/download/voicevox_onnxruntime-1.17.3/voicevox_onnxruntime-ios-xcframework-1.17.3.zip",
-      checksum: "5b0138f25e68c3fb99771d37978837d5038a67b0720f96d912c900887164494b"
+        "https://github.com/tattn/voicevox-client-onnxruntime/releases/download/v1.17.3/voicevox_onnxruntime-ios-xcframework-1.17.3-modified.zip",
+      checksum: "d69d4bea8aed28414ec5d590351245ff02f7d50415255b2872ceb1c925d2debf"
     ),
     .binaryTarget(
       name: "voicevox_core_ios",
