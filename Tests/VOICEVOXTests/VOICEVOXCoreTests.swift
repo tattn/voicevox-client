@@ -9,7 +9,7 @@ struct VOICEVOXCoreTests {
     try TestResources.verifyResourcesExist()
 
     let config = TestResources.createTestConfiguration()
-    _ = try await VOICEVOXSynthesizer(configuration: config)
+    _ = try await Synthesizer(configuration: config)
   }
 
   @Test
@@ -19,7 +19,7 @@ struct VOICEVOXCoreTests {
     )
 
     await #expect(throws: VOICEVOXError.self) {
-      _ = try await VOICEVOXSynthesizer(configuration: config)
+      _ = try await Synthesizer(configuration: config)
     }
   }
 
@@ -28,7 +28,7 @@ struct VOICEVOXCoreTests {
     try TestResources.verifyResourcesExist()
 
     let config = TestResources.createTestConfiguration()
-    let synthesizer = try await VOICEVOXSynthesizer(configuration: config)
+    let synthesizer = try await Synthesizer(configuration: config)
 
     try await synthesizer.loadVoiceModel(from: TestResources.primaryVoiceModelURL)
 
@@ -41,7 +41,7 @@ struct VOICEVOXCoreTests {
     try TestResources.verifyResourcesExist()
 
     let config = TestResources.createTestConfiguration()
-    let synthesizer = try await VOICEVOXSynthesizer(configuration: config)
+    let synthesizer = try await Synthesizer(configuration: config)
     try await synthesizer.loadVoiceModel(from: TestResources.primaryVoiceModelURL)
 
     let audioData = try await synthesizer.synthesize(
@@ -59,7 +59,7 @@ struct VOICEVOXCoreTests {
     try TestResources.verifyResourcesExist()
 
     let config = TestResources.createTestConfiguration()
-    let synthesizer = try await VOICEVOXSynthesizer(configuration: config)
+    let synthesizer = try await Synthesizer(configuration: config)
 
     let modelURL = TestResources.primaryVoiceModelURL
 
@@ -96,7 +96,7 @@ struct VOICEVOXCoreTests {
     try TestResources.verifyResourcesExist()
 
     let config = TestResources.createTestConfiguration()
-    let synthesizer = try await VOICEVOXSynthesizer(configuration: config)
+    let synthesizer = try await Synthesizer(configuration: config)
 
     // Before loading any models, speakers should be empty
     let speakersBeforeLoad = try await synthesizer.getSpeakers()
@@ -134,7 +134,7 @@ struct VOICEVOXCoreTests {
     try TestResources.verifyResourcesExist()
 
     let config = TestResources.createTestConfiguration()
-    let synthesizer = try await VOICEVOXSynthesizer(configuration: config)
+    let synthesizer = try await Synthesizer(configuration: config)
     try await synthesizer.loadVoiceModel(from: TestResources.primaryVoiceModelURL)
 
     let optionsTrue = TTSOptions(enableInterrogativeUpspeak: true)

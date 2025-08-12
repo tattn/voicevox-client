@@ -10,7 +10,7 @@ final class ViewModel {
     synthesizer != nil
   }
 
-  private var synthesizer: VOICEVOXSynthesizer?
+  private var synthesizer: Synthesizer?
   @ObservationIgnored private var audioPlayer: AVAudioPlayer?
 
   /// Sets up the VOICEVOX synthesizer with required resources.
@@ -27,7 +27,7 @@ final class ViewModel {
       onnxruntimeDirectoryURL: resourceURL.appending(path: "lib"),
     )
     do {
-      let synthesizer = try await VOICEVOXSynthesizer(configuration: config)
+      let synthesizer = try await Synthesizer(configuration: config)
       try await synthesizer.loadVoiceModel(from: modelURL)
 
       self.synthesizer = synthesizer

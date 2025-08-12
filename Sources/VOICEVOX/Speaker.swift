@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents a voice speaker with their available styles and metadata.
-public struct VOICEVOXSpeaker: Codable, Equatable, Hashable, Sendable {
+public struct Speaker: Codable, Equatable, Hashable, Sendable {
   /// The unique identifier for this speaker.
   public let speakerUUID: UUID
 

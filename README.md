@@ -74,7 +74,7 @@ let config = VOICEVOXConfiguration(
 )
 
 // Initialize
-let synthesizer = try await VOICEVOXSynthesizer(configuration: config)
+let synthesizer = try await Synthesizer(configuration: config)
 
 // Load voice model
 let modelURL = URL(fileURLWithPath: "/path/to/model.vvm")
