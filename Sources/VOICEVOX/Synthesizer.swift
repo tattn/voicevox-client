@@ -10,6 +10,9 @@ public actor Synthesizer {
   /// The native synthesizer wrapper from VOICEVOX Core.
   private let synthesizer: CoreSynthesizer
 
+  /// The user dictionary instance.
+  private var userDictionary: UserDictionary?
+
   /// Creates and initializes a new synthesizer instance with the specified configuration.
   ///
   /// - Parameter configuration: The configuration settings specifying dictionary
@@ -81,6 +84,32 @@ public actor Synthesizer {
 
     // Unload the model from the synthesizer
     try synthesizer.unloadVoiceModel(modelID: modelID)
+  }
+
+  /// Sets a user dictionary for text analysis.
+  ///
+  /// The user dictionary allows customization of pronunciation for specific words
+  /// that may not be correctly analyzed by the default OpenJTalk dictionary.
+  ///
+  /// - Parameter userDictionary: The user dictionary to use, or nil to clear the current dictionary.
+  ///
+  /// - Throws: `VOICEVOXError.userDictError` if the dictionary cannot be set.
+  ///
+  /// - Note: Changes to the user dictionary after calling this method require
+  ///   calling this method again to apply the changes.
+  public func setUserDictionary(_ userDictionary: UserDictionary?) async throws(VOICEVOXError) {
+    self.userDictionary = userDictionary
+
+    if let userDictionary {
+      try synthesizer.openJTalk.useUserDictionary(userDictionary)
+    }
+  }
+
+  /// Gets the current user dictionary.
+  ///
+  /// - Returns: The currently set user dictionary, or nil if no dictionary is set.
+  public func getUserDictionary() async -> UserDictionary? {
+    userDictionary
   }
 
   /// Retrieves metadata for all currently loaded voice models.
@@ -195,5 +224,28 @@ public actor Synthesizer {
 
     let audioQuery = try synthesizer.makeAudioQuery(text: text, styleId: styleId)
     return try synthesizer.synthesize(audioQuery: audioQuery, styleId: styleId, options: synthOptions)
+  }
+
+  /// Replaces mora data (pitch and phoneme length) in an audio query with values generated for a specific voice style.
+  ///
+  /// This method takes an existing AudioQuery and regenerates the mora pitch and phoneme length values
+  /// using the specified voice style. This is useful when you want to apply different voice characteristics
+  /// to an already analyzed text.
+  ///
+  /// - Parameters:
+  ///   - audioQuery: The audio query containing accent phrases to be updated.
+  ///   - styleId: The voice style identifier to use for generating new mora data.
+  ///
+  /// - Returns: A new `AudioQuery` with updated mora pitch and phoneme length values.
+  ///
+  /// - Throws: `VOICEVOXError.synthesisFailed` if the mora data replacement fails.
+  ///
+  /// - Note: This method is a shorthand that combines both phoneme length and mora pitch replacement.
+  ///   The original AudioQuery remains unchanged; a new instance is returned.
+  public func replaceMoraData(
+    audioQuery: AudioQuery,
+    styleId: UInt32
+  ) async throws(VOICEVOXError) -> AudioQuery {
+    try synthesizer.replaceMoraData(audioQuery: audioQuery, styleId: styleId)
   }
 }

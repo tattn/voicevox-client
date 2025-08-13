@@ -245,4 +245,98 @@ struct CoreSynthesizerTests {
     #expect(!audioData.isEmpty)
     #expect(audioData[0...3] == Data([0x52, 0x49, 0x46, 0x46]))
   }
+
+  @Test
+  func testReplaceMoraData() async throws {
+    let synthesizer = try await createSynthesizer()
+
+    // Create an initial audio query
+    let originalAudioQuery = try synthesizer.makeAudioQuery(text: "ピッチリセットテスト", styleId: 0)
+
+    // Store original pitch values for comparison
+    let originalPitches = originalAudioQuery.accentPhrases.flatMap { phrase in
+      phrase.moras.map(\.pitch)
+    }
+
+    // Replace mora data with the same style ID (should reset pitches)
+    let updatedAudioQuery = try synthesizer.replaceMoraData(
+      audioQuery: originalAudioQuery,
+      styleId: 0
+    )
+
+    // Verify that the audio query structure is preserved
+    #expect(updatedAudioQuery.accentPhrases.count == originalAudioQuery.accentPhrases.count)
+    #expect(updatedAudioQuery.speedScale == originalAudioQuery.speedScale)
+    #expect(updatedAudioQuery.pitchScale == originalAudioQuery.pitchScale)
+    #expect(updatedAudioQuery.intonationScale == originalAudioQuery.intonationScale)
+    #expect(updatedAudioQuery.volumeScale == originalAudioQuery.volumeScale)
+    #expect(updatedAudioQuery.outputSamplingRate == originalAudioQuery.outputSamplingRate)
+
+    // Verify that accent phrases have the same structure
+    for (original, updated) in zip(originalAudioQuery.accentPhrases, updatedAudioQuery.accentPhrases) {
+      #expect(original.moras.count == updated.moras.count)
+      #expect(original.accent == updated.accent)
+      #expect(original.isInterrogative == updated.isInterrogative)
+    }
+
+    // The pitch values should have been recalculated
+    let updatedPitches = updatedAudioQuery.accentPhrases.flatMap { phrase in
+      phrase.moras.map(\.pitch)
+    }
+
+    // Since we're using the same style ID, the pitches should be identical
+    // (deterministic for the same text and style)
+    #expect(originalPitches == updatedPitches)
+  }
+
+  @Test
+  func testReplaceMoraDataWithModifiedAudioQuery() async throws {
+    let synthesizer = try await createSynthesizer()
+
+    // Create an initial audio query
+    var audioQuery = try synthesizer.makeAudioQuery(text: "変更テスト", styleId: 0)
+
+    // Modify some parameters
+    audioQuery.speedScale = 1.5
+    audioQuery.pitchScale = 0.8
+    audioQuery.volumeScale = 1.2
+
+    // Replace mora data
+    let updatedAudioQuery = try synthesizer.replaceMoraData(
+      audioQuery: audioQuery,
+      styleId: 0
+    )
+
+    // Verify that the modified parameters are preserved
+    #expect(updatedAudioQuery.speedScale == 1.5)
+    #expect(updatedAudioQuery.pitchScale == 0.8)
+    #expect(updatedAudioQuery.volumeScale == 1.2)
+
+    // The accent phrases should have been updated
+    #expect(!updatedAudioQuery.accentPhrases.isEmpty)
+  }
+
+  @Test
+  func testReplaceMoraDataAndSynthesize() async throws {
+    let synthesizer = try await createSynthesizer()
+
+    // Create an audio query
+    let audioQuery = try synthesizer.makeAudioQuery(text: "合成テスト", styleId: 0)
+
+    // Replace mora data
+    let updatedAudioQuery = try synthesizer.replaceMoraData(
+      audioQuery: audioQuery,
+      styleId: 0
+    )
+
+    // Synthesize audio with the updated query
+    let audioData = try synthesizer.synthesize(
+      audioQuery: updatedAudioQuery,
+      styleId: 0
+    )
+
+    #expect(!audioData.isEmpty)
+    #expect(audioData.count > 44) // WAV header is at least 44 bytes
+    #expect(audioData[0...3] == Data([0x52, 0x49, 0x46, 0x46])) // "RIFF"
+  }
 }

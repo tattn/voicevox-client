@@ -10,22 +10,22 @@ public struct AudioQuery: Codable, Sendable {
   /// A mora is a fundamental timing unit in Japanese phonology.
   public struct Mora: Codable, Sendable {
     /// The text representation of the mora
-    public let text: String
+    public var text: String
 
     /// The consonant sound (optional)
-    public let consonant: String?
+    public var consonant: String?
 
     /// The length of the consonant sound in seconds (optional)
-    public let consonantLength: Float?
+    public var consonantLength: Float?
 
     /// The vowel sound
-    public let vowel: String
+    public var vowel: String
 
     /// The length of the vowel sound in seconds
-    public let vowelLength: Float
+    public var vowelLength: Float
 
     /// The pitch of the mora in Hz
-    public let pitch: Float
+    public var pitch: Float
 
     private enum CodingKeys: String, CodingKey {
       case text
@@ -35,36 +35,30 @@ public struct AudioQuery: Codable, Sendable {
       case vowelLength = "vowel_length"
       case pitch
     }
-  }
 
-  /// Represents a pause mora in speech synthesis.
-  /// Pause moras are used to represent silence or pauses between speech segments.
-  public struct PauseMora: Codable, Sendable {
-    /// The text representation (typically empty for pauses)
-    public let text: String
-
-    /// The consonant sound (optional)
-    public let consonant: String?
-
-    /// The length of the consonant sound in seconds (optional)
-    public let consonantLength: Float?
-
-    /// The vowel sound
-    public let vowel: String
-
-    /// The length of the vowel sound in seconds
-    public let vowelLength: Float
-
-    /// The pitch in Hz (typically 0 for pauses)
-    public let pitch: Float
-
-    private enum CodingKeys: String, CodingKey {
-      case text
-      case consonant
-      case consonantLength = "consonant_length"
-      case vowel
-      case vowelLength = "vowel_length"
-      case pitch
+    /// Creates a new Mora with the specified parameters.
+    ///
+    /// - Parameters:
+    ///   - text: The text representation of the mora
+    ///   - consonant: The consonant sound (optional)
+    ///   - consonantLength: The length of the consonant sound in seconds (optional)
+    ///   - vowel: The vowel sound
+    ///   - vowelLength: The length of the vowel sound in seconds
+    ///   - pitch: The pitch of the mora in Hz
+    public init(
+      text: String,
+      consonant: String? = nil,
+      consonantLength: Float? = nil,
+      vowel: String,
+      vowelLength: Float,
+      pitch: Float
+    ) {
+      self.text = text
+      self.consonant = consonant
+      self.consonantLength = consonantLength
+      self.vowel = vowel
+      self.vowelLength = vowelLength
+      self.pitch = pitch
     }
   }
 
@@ -72,16 +66,16 @@ public struct AudioQuery: Codable, Sendable {
   /// An accent phrase is a phonological unit that contains one or more moras with a specific accent pattern.
   public struct AccentPhrase: Codable, Sendable {
     /// Array of moras that make up the phrase
-    public let moras: [Mora]
+    public var moras: [Mora]
 
     /// The accent position in the phrase (0 means no accent, 1+ indicates mora position)
-    public let accent: Int
+    public var accent: Int
 
     /// Optional pause mora at the end of the phrase
-    public let pauseMora: PauseMora?
+    public var pauseMora: Mora?
 
     /// Whether this phrase is interrogative (affects intonation)
-    public let isInterrogative: Bool
+    public var isInterrogative: Bool
 
     private enum CodingKeys: String, CodingKey {
       case moras
@@ -89,37 +83,56 @@ public struct AudioQuery: Codable, Sendable {
       case pauseMora = "pause_mora"
       case isInterrogative = "is_interrogative"
     }
+
+    /// Creates a new AccentPhrase with the specified parameters.
+    ///
+    /// - Parameters:
+    ///   - moras: Array of moras that make up the phrase
+    ///   - accent: The accent position in the phrase (0 means no accent, 1+ indicates mora position)
+    ///   - pauseMora: Optional pause mora at the end of the phrase
+    ///   - isInterrogative: Whether this phrase is interrogative (affects intonation)
+    public init(
+      moras: [Mora],
+      accent: Int,
+      pauseMora: Mora? = nil,
+      isInterrogative: Bool = false
+    ) {
+      self.moras = moras
+      self.accent = accent
+      self.pauseMora = pauseMora
+      self.isInterrogative = isInterrogative
+    }
   }
 
   /// Array of accent phrases that make up the query
-  public let accentPhrases: [AccentPhrase]
+  public var accentPhrases: [AccentPhrase]
 
   /// Speed scale factor (1.0 = normal speed, >1.0 = faster, <1.0 = slower)
-  public let speedScale: Float
+  public var speedScale: Float
 
   /// Pitch scale adjustment (1.0 = no change, >1.0 = higher pitch, <1.0 = lower pitch)
-  public let pitchScale: Float
+  public var pitchScale: Float
 
   /// Intonation scale factor (1.0 = normal intonation, >1.0 = more expressive, <1.0 = flatter)
-  public let intonationScale: Float
+  public var intonationScale: Float
 
   /// Volume scale factor (1.0 = normal volume, >1.0 = louder, <1.0 = quieter)
-  public let volumeScale: Float
+  public var volumeScale: Float
 
   /// Length of pre-phoneme pause in seconds
-  public let prePhonemeLength: Float
+  public var prePhonemeLength: Float
 
   /// Length of post-phoneme pause in seconds
-  public let postPhonemeLength: Float
+  public var postPhonemeLength: Float
 
   /// Output sampling rate in Hz (typically 24000)
-  public let outputSamplingRate: Int
+  public var outputSamplingRate: Int
 
   /// Whether to output in stereo (true) or mono (false)
-  public let outputStereo: Bool
+  public var outputStereo: Bool
 
   /// Kana representation of the text (optional)
-  public let kana: String?
+  public var kana: String?
 
   private enum CodingKeys: String, CodingKey {
     case accentPhrases = "accent_phrases"

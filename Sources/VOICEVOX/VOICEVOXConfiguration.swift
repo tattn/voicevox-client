@@ -75,13 +75,6 @@ public struct TTSOptions: Sendable {
 // MARK: - TTSOptions Convenience
 
 extension TTSOptions {
-  /// Converts to VOICEVOX TTS options.
-  func toVoicevoxTtsOptions() -> VoicevoxTtsOptions {
-    var ttsOptions = voicevox_make_default_tts_options()
-    ttsOptions.enable_interrogative_upspeak = enableInterrogativeUpspeak
-    return ttsOptions
-  }
-
   /// Standard TTS options with interrogative upspeak enabled.
   public static let standard = TTSOptions(enableInterrogativeUpspeak: true)
 

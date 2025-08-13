@@ -64,6 +64,22 @@ public enum VOICEVOXError: LocalizedError, Sendable {
   /// - Parameter availableStyleIds: Optional list of available style IDs.
   case invalidStyleId(styleId: UInt32, availableStyleIds: [UInt32]? = nil)
 
+  /// User dictionary operation failed.
+  ///
+  /// This error occurs when operations on the user dictionary fail,
+  /// such as adding, updating, removing words, or loading/saving the dictionary.
+  ///
+  /// - Parameter operation: The operation that failed (e.g., "add", "update", "remove", "load", "save").
+  /// - Parameter details: Optional additional details about the failure.
+  case userDictError(operation: String, details: String? = nil)
+
+  /// Internal error occurred.
+  ///
+  /// This error occurs when an unexpected internal error happens.
+  ///
+  /// - Parameter details: Details about the internal error.
+  case internalError(details: String)
+
   // MARK: - LocalizedError Implementation
 
   public var errorDescription: String? {
@@ -123,6 +139,16 @@ public enum VOICEVOXError: LocalizedError, Sendable {
         description += ". Available style IDs: \(availableIds)"
       }
       return description
+
+    case let .userDictError(operation, details):
+      var description = "User dictionary \(operation) operation failed"
+      if let details {
+        description += ": \(details)"
+      }
+      return description
+
+    case let .internalError(details):
+      return "Internal error: \(details)"
     }
   }
 
@@ -140,6 +166,10 @@ public enum VOICEVOXError: LocalizedError, Sendable {
       "The synthesis process encountered an unexpected error"
     case .invalidStyleId:
       "The requested voice style is not available in the loaded models"
+    case .userDictError:
+      "The user dictionary operation could not be completed"
+    case .internalError:
+      "An unexpected internal error occurred"
     }
   }
 
@@ -157,6 +187,10 @@ public enum VOICEVOXError: LocalizedError, Sendable {
       "Ensure voice models are loaded and the style ID is valid"
     case .invalidStyleId:
       "Load the appropriate voice model or use a valid style ID"
+    case .userDictError:
+      "Check the dictionary file format and permissions, or verify the word data is valid"
+    case .internalError:
+      "Please report this issue to the developers with the error details"
     }
   }
 }

@@ -24,31 +24,17 @@ public struct VoiceModelID: Equatable, Hashable, Sendable {
   }
 
   public static func == (lhs: VoiceModelID, rhs: VoiceModelID) -> Bool {
-    lhs.rawValue.0 == rhs.rawValue.0 && lhs.rawValue.1 == rhs.rawValue.1 && lhs.rawValue.2 == rhs.rawValue.2
-      && lhs.rawValue.3 == rhs.rawValue.3 && lhs.rawValue.4 == rhs.rawValue.4 && lhs.rawValue.5 == rhs.rawValue.5
-      && lhs.rawValue.6 == rhs.rawValue.6 && lhs.rawValue.7 == rhs.rawValue.7 && lhs.rawValue.8 == rhs.rawValue.8
-      && lhs.rawValue.9 == rhs.rawValue.9 && lhs.rawValue.10 == rhs.rawValue.10 && lhs.rawValue.11 == rhs.rawValue.11
-      && lhs.rawValue.12 == rhs.rawValue.12 && lhs.rawValue.13 == rhs.rawValue.13 && lhs.rawValue.14 == rhs.rawValue.14
-      && lhs.rawValue.15 == rhs.rawValue.15
+    withUnsafeBytes(of: lhs.rawValue) { lhsBytes in
+      withUnsafeBytes(of: rhs.rawValue) { rhsBytes in
+        lhsBytes.elementsEqual(rhsBytes)
+      }
+    }
   }
 
   public func hash(into hasher: inout Hasher) {
-    hasher.combine(rawValue.0)
-    hasher.combine(rawValue.1)
-    hasher.combine(rawValue.2)
-    hasher.combine(rawValue.3)
-    hasher.combine(rawValue.4)
-    hasher.combine(rawValue.5)
-    hasher.combine(rawValue.6)
-    hasher.combine(rawValue.7)
-    hasher.combine(rawValue.8)
-    hasher.combine(rawValue.9)
-    hasher.combine(rawValue.10)
-    hasher.combine(rawValue.11)
-    hasher.combine(rawValue.12)
-    hasher.combine(rawValue.13)
-    hasher.combine(rawValue.14)
-    hasher.combine(rawValue.15)
+    withUnsafeBytes(of: rawValue) { bytes in
+      hasher.combine(bytes: bytes)
+    }
   }
 }
 

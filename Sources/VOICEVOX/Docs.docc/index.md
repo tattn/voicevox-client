@@ -8,11 +8,10 @@ VOICEVOX is a powerful Swift library that provides seamless integration with the
 
 ## Getting Started
 
-### Basic Setup
+To start using VOICEVOX in your application, follow these steps:
 
-To start using VOICEVOX, you need to:
-1. Create a configuration
-2. Initialize the synthesizer
+1. Create a ``VOICEVOXConfiguration``
+2. Initialize the ``Synthesizer``
 3. Load voice models
 4. Generate speech from text
 
@@ -39,9 +38,9 @@ let audioData = try await synthesizer.synthesize(
 
 ## Advanced Usage
 
-### Audio Query Workflow
+### Working with Audio Queries
 
-For fine-grained control over the synthesis process, you can work with AudioQuery objects:
+For fine-grained control over the synthesis process, you can work with ``AudioQuery`` objects:
 
 ```swift
 // Step 1: Create an audio query from text
@@ -71,9 +70,82 @@ let audioData = try await synthesizer.synthesize(
 )
 ```
 
-## Platform-Specific Configuration
+### Custom Pronunciation with User Dictionary
 
-### iOS
+The ``UserDictionary`` class allows you to register custom words with specific pronunciations and accent patterns. This is particularly useful for proper nouns, technical terms, or any words that may not be in the standard dictionary.
+
+#### Creating and Managing Words
+
+```swift
+// Create a user dictionary
+let dictionary = UserDictionary()
+
+// Add custom words
+let word = UserDictionary.Word(
+    surface: "VOICEVOX",
+    pronunciation: "ボイスボックス",
+    accentType: 4,
+    wordType: .properNoun,
+    priority: 10
+)
+let wordId = try dictionary.addWord(word)
+
+// Register multiple words
+let techWord = UserDictionary.Word(
+    surface: "Swift",
+    pronunciation: "スウィフト",
+    accentType: 3,
+    wordType: .properNoun
+)
+_ = try dictionary.addWord(techWord)
+
+// Apply dictionary to OpenJTalk
+let openJTalk = try await OpenJTalk(openJTalkDictionaryURL: dictURL)
+try await openJTalk.useUserDictionary(dictionary)
+
+// Now synthesis will use your custom pronunciations
+let synthesizer = try await Synthesizer(configuration: config)
+let audioData = try await synthesizer.synthesize(
+    text: "VOICEVOXをSwiftで使う",
+    styleId: 0
+)
+```
+
+#### Managing Dictionary Entries
+
+Each word added to the dictionary returns a `UUID` that can be used to update or remove entries:
+
+```swift
+// Update an existing word
+let updatedWord = UserDictionary.Word(
+    surface: "VOICEVOX",
+    pronunciation: "ボイボ",  // Shortened pronunciation
+    accentType: 2,
+    wordType: .properNoun
+)
+try dictionary.updateWord(uuid: wordId, word: updatedWord)
+
+// Remove a word
+try dictionary.removeWord(uuid: wordId)
+
+// Save/Load dictionary
+let fileURL = documentsDirectory.appendingPathComponent("custom_dict.json")
+try dictionary.save(to: fileURL)
+
+let loadedDict = UserDictionary()
+try loadedDict.load(from: fileURL)
+
+// Import from another dictionary
+let anotherDict = UserDictionary()
+try dictionary.importDictionary(anotherDict)
+
+// Export as JSON
+let jsonData = try dictionary.toJSON()
+```
+
+### Platform-Specific Configuration
+
+#### iOS Configuration
 
 On iOS, the library automatically handles the embedded ONNX Runtime:
 
@@ -85,7 +157,7 @@ let config = VOICEVOXConfiguration(
 #endif
 ```
 
-### macOS
+#### macOS Configuration
 
 On macOS, you need to specify the ONNX Runtime directory:
 
@@ -106,11 +178,12 @@ let config = VOICEVOXConfiguration(
 - ``VOICEVOXConfiguration``
 - ``VOICEVOXError``
 
-### Voice Models and Speakers
+### Voice Models
 
 - ``VoiceModelFile``
 - ``VoiceModelID``
 - ``Speaker``
+- ``SpeakerStyle``
 
 ### Audio Generation
 
@@ -119,7 +192,18 @@ let config = VOICEVOXConfiguration(
 - ``AudioQuery/Mora``
 - ``AudioQuery/PauseMora``
 
-### Configuration
+### Text Processing
+
+- ``OpenJTalk``
+- ``UserDictionary``
+- ``UserDictionary/Word``
+- ``UserDictionary/WordType``
+
+### Configuration Options
 
 - ``TTSOptions``
 - ``AccelerationMode``
+
+### Synthesis Options
+
+- ``SynthesisOptions``

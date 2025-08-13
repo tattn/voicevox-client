@@ -186,4 +186,96 @@ final class CoreSynthesizer {
     defer { voicevox_wav_free(wavBuffer) }
     return Data(bytes: wavBuffer, count: Int(wavLength))
   }
+
+  /// Replaces mora data (pitch and phoneme length) in an audio query with values generated for a specific voice style.
+  ///
+  /// This method takes an existing AudioQuery and regenerates the mora pitch and phoneme length values
+  /// using the specified voice style. This is useful when you want to apply different voice characteristics
+  /// to an already analyzed text.
+  ///
+  /// - Parameters:
+  ///   - audioQuery: The audio query containing accent phrases to be updated.
+  ///   - styleId: The voice style identifier to use for generating new mora data.
+  ///
+  /// - Returns: A new ``AudioQuery`` with updated mora pitch and phoneme length values.
+  ///
+  /// - Throws: ``VOICEVOXError`` if the mora data replacement fails.
+  func replaceMoraData(
+    audioQuery: AudioQuery,
+    styleId: UInt32
+  ) throws(VOICEVOXError) -> AudioQuery {
+    // Encode accent phrases to JSON
+    let accentPhrasesJson = try encodeAccentPhrases(audioQuery.accentPhrases, styleId: styleId)
+
+    // Call C API to replace mora data
+    let updatedAccentPhrasesJson = try replaceMoraDataCore(accentPhrasesJson: accentPhrasesJson, styleId: styleId)
+    defer { voicevox_json_free(updatedAccentPhrasesJson) }
+
+    // Decode and return updated audio query
+    let updatedAccentPhrases = try decodeAccentPhrases(from: updatedAccentPhrasesJson, styleId: styleId)
+
+    var updatedAudioQuery = audioQuery
+    updatedAudioQuery.accentPhrases = updatedAccentPhrases
+    return updatedAudioQuery
+  }
+
+  // MARK: - Private Helper Methods
+
+  private func encodeAccentPhrases(
+    _ accentPhrases: [AudioQuery.AccentPhrase],
+    styleId: UInt32
+  ) throws(VOICEVOXError) -> String {
+    do {
+      let data = try JSONEncoder().encode(accentPhrases)
+      return String(decoding: data, as: UTF8.self)
+    } catch {
+      throw VOICEVOXError.synthesisFailed(
+        text: nil,
+        styleId: styleId,
+        reason: "Failed to encode accent phrases: \(error.localizedDescription)"
+      )
+    }
+  }
+
+  private func replaceMoraDataCore(
+    accentPhrasesJson: String,
+    styleId: UInt32
+  ) throws(VOICEVOXError) -> UnsafeMutablePointer<CChar> {
+    var updatedAccentPhrasesJson: UnsafeMutablePointer<CChar>?
+    let resultCode = voicevox_synthesizer_replace_mora_data(
+      pointer,
+      accentPhrasesJson,
+      VoicevoxStyleId(styleId),
+      &updatedAccentPhrasesJson
+    )
+
+    guard resultCode == 0, let updatedAccentPhrasesJson else {
+      throw .synthesisFailed(
+        text: nil,
+        styleId: styleId,
+        reason: "Failed to replace mora data (error code: \(resultCode))"
+      )
+    }
+
+    return updatedAccentPhrasesJson
+  }
+
+  private func decodeAccentPhrases(
+    from jsonPointer: UnsafeMutablePointer<CChar>,
+    styleId: UInt32
+  ) throws(VOICEVOXError) -> [AudioQuery.AccentPhrase] {
+    do {
+      return try JSONDecoder()
+        .decode(
+          [AudioQuery.AccentPhrase].self,
+          from: Data(bytes: jsonPointer, count: strlen(jsonPointer))
+        )
+    } catch {
+      throw .synthesisFailed(
+        text: nil,
+        styleId: styleId,
+        reason: "Failed to decode updated accent phrases: \(error.localizedDescription)"
+      )
+    }
+  }
 }

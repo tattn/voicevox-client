@@ -22,6 +22,17 @@ final class OpenJTalk {
     self.pointer = openJTalk
   }
 
+  /// Sets a user dictionary for text analysis
+  /// - Parameter userDictionary: The user dictionary to set
+  /// - Throws: ``VOICEVOXError/userDictError(operation:details:)`` if the operation fails
+  func useUserDictionary(_ userDictionary: UserDictionary) throws(VOICEVOXError) {
+    let resultCode = voicevox_open_jtalk_rc_use_user_dict(pointer, userDictionary.getCPointer())
+
+    guard resultCode == 0 else {
+      throw .userDictError(operation: "use", details: "Failed to set user dictionary with error code: \(resultCode)")
+    }
+  }
+
   deinit {
     voicevox_open_jtalk_rc_delete(pointer)
   }
