@@ -126,10 +126,9 @@ public final class UserDictionary: @unchecked Sendable {
   }
 
   /// Adds a word to the dictionary
-  /// - Parameter word: Word to add
-  /// - Returns: UUID of the added word
+  /// - Parameter word: Word to add (its ID will be replaced with the generated UUID)
   /// - Throws: ``VOICEVOXError/userDictError(operation:details:)`` if the operation fails
-  public func addWord(_ word: Word) throws(VOICEVOXError) -> UUID {
+  public func addWord(_ word: inout Word) throws(VOICEVOXError) {
     try performLocked {
       var uuidBytes = [UInt8](repeating: 0, count: 16)
       var cWord = word.toCStruct()
@@ -149,7 +148,7 @@ public final class UserDictionary: @unchecked Sendable {
         )
       }
 
-      return makeUUID(from: uuidBytes)
+      word.id = makeUUID(from: uuidBytes)
     }
   }
 
@@ -200,11 +199,9 @@ public final class UserDictionary: @unchecked Sendable {
   }
 
   /// Updates a word in the dictionary
-  /// - Parameters:
-  ///   - uuid: UUID of the word to update
-  ///   - word: New word data
+  /// - Parameter word: Word data to update (uses the word's ID to identify which entry to update)
   /// - Throws: ``VOICEVOXError/userDictError(operation:details:)`` if the operation fails
-  public func updateWord(uuid: UUID, word: Word) throws(VOICEVOXError) {
+  public func updateWord(_ word: Word) throws(VOICEVOXError) {
     try performLocked {
       var cWord = word.toCStruct()
       defer {
@@ -212,32 +209,32 @@ public final class UserDictionary: @unchecked Sendable {
         free(UnsafeMutablePointer(mutating: cWord.pronunciation))
       }
 
-      let resultCode = withUUIDTuple(uuid: uuid) { tuplePtr in
+      let resultCode = withUUIDTuple(uuid: word.id) { tuplePtr in
         voicevox_user_dict_update_word(pointer, tuplePtr, &cWord)
       }
 
       guard resultCode == 0 else {
         throw VOICEVOXError.userDictError(
           operation: "update",
-          details: "Failed to update word with UUID: \(uuid), error code: \(resultCode)"
+          details: "Failed to update word with UUID: \(word.id), error code: \(resultCode)"
         )
       }
     }
   }
 
   /// Removes a word from the dictionary
-  /// - Parameter uuid: UUID of the word to remove
+  /// - Parameter id: ID of the word to remove
   /// - Throws: ``VOICEVOXError/userDictError(operation:details:)`` if the operation fails
-  public func removeWord(uuid: UUID) throws(VOICEVOXError) {
+  public func removeWord(id: UUID) throws(VOICEVOXError) {
     try performLocked {
-      let resultCode = withUUIDTuple(uuid: uuid) { tuplePtr in
+      let resultCode = withUUIDTuple(uuid: id) { tuplePtr in
         voicevox_user_dict_remove_word(pointer, tuplePtr)
       }
 
       guard resultCode == 0 else {
         throw VOICEVOXError.userDictError(
           operation: "remove",
-          details: "Failed to remove word with UUID: \(uuid), error code: \(resultCode)"
+          details: "Failed to remove word with ID: \(id), error code: \(resultCode)"
         )
       }
     }

@@ -1,4 +1,4 @@
-# ``VOICEVOX``
+# `VOICEVOX`
 
 A Swift client library for VOICEVOX text-to-speech synthesis engine.
 
@@ -10,8 +10,8 @@ VOICEVOX is a powerful Swift library that provides seamless integration with the
 
 To start using VOICEVOX in your application, follow these steps:
 
-1. Create a ``VOICEVOXConfiguration``
-2. Initialize the ``Synthesizer``
+1. Create a `VOICEVOXConfiguration`
+2. Initialize the `Synthesizer`
 3. Load voice models
 4. Generate speech from text
 
@@ -40,7 +40,7 @@ let audioData = try await synthesizer.synthesize(
 
 ### Working with Audio Queries
 
-For fine-grained control over the synthesis process, you can work with ``AudioQuery`` objects:
+For fine-grained control over the synthesis process, you can work with `AudioQuery` objects:
 
 ```swift
 // Step 1: Create an audio query from text
@@ -72,7 +72,7 @@ let audioData = try await synthesizer.synthesize(
 
 ### Custom Pronunciation with User Dictionary
 
-The ``UserDictionary`` class allows you to register custom words with specific pronunciations and accent patterns. This is particularly useful for proper nouns, technical terms, or any words that may not be in the standard dictionary.
+The `UserDictionary` class allows you to register custom words with specific pronunciations and accent patterns. This is particularly useful for proper nouns, technical terms, or any words that may not be in the standard dictionary.
 
 #### Creating and Managing Words
 
@@ -81,23 +81,23 @@ The ``UserDictionary`` class allows you to register custom words with specific p
 let dictionary = UserDictionary()
 
 // Add custom words
-let word = UserDictionary.Word(
+var word = UserDictionary.Word(
     surface: "VOICEVOX",
     pronunciation: "ボイスボックス",
     accentType: 4,
     wordType: .properNoun,
     priority: 10
 )
-let wordId = try dictionary.addWord(word)
+try dictionary.addWord(&word)
 
 // Register multiple words
-let techWord = UserDictionary.Word(
+var techWord = UserDictionary.Word(
     surface: "Swift",
     pronunciation: "スウィフト",
     accentType: 3,
     wordType: .properNoun
 )
-_ = try dictionary.addWord(techWord)
+try dictionary.addWord(&techWord)
 
 // Initialize synthesizer with configuration
 let synthesizer = try await Synthesizer(configuration: config)
@@ -114,20 +114,16 @@ let audioData = try await synthesizer.synthesize(
 
 #### Managing Dictionary Entries
 
-Each word added to the dictionary returns a `UUID` that can be used to update or remove entries:
+Each word added to the dictionary has its `id` property set to a unique `UUID` that can be used to update or remove entries:
 
 ```swift
-// Update an existing word
-let updatedWord = UserDictionary.Word(
-    surface: "VOICEVOX",
-    pronunciation: "ボイボ",  // Shortened pronunciation
-    accentType: 2,
-    wordType: .properNoun
-)
-try dictionary.updateWord(uuid: wordId, word: updatedWord)
+// Update an existing word by modifying its properties
+word.pronunciation = "ボイボ"  // Shortened pronunciation
+word.accentType = 2
+try dictionary.updateWord(word)
 
 // Remove a word
-try dictionary.removeWord(uuid: wordId)
+try dictionary.removeWord(id: word.id)
 
 // Save/Load dictionary
 let fileURL = documentsDirectory.appendingPathComponent("custom_dict.json")
@@ -175,36 +171,36 @@ let config = VOICEVOXConfiguration(
 
 ### Essentials
 
-- ``Synthesizer``
-- ``VOICEVOXConfiguration``
-- ``VOICEVOXError``
+- `Synthesizer`
+- `VOICEVOXConfiguration`
+- `VOICEVOXError`
 
 ### Voice Models
 
-- ``VoiceModelFile``
-- ``VoiceModelID``
-- ``Speaker``
-- ``SpeakerStyle``
+- `VoiceModelFile`
+- `VoiceModelID`
+- `Speaker`
+- `SpeakerStyle`
 
 ### Audio Generation
 
-- ``AudioQuery``
-- ``AudioQuery/AccentPhrase``
-- ``AudioQuery/Mora``
-- ``AudioQuery/PauseMora``
+- `AudioQuery`
+- `AudioQuery/AccentPhrase`
+- `AudioQuery/Mora`
+- `AudioQuery/PauseMora`
 
 ### Text Processing
 
-- ``OpenJTalk``
-- ``UserDictionary``
-- ``UserDictionary/Word``
-- ``UserDictionary/WordType``
+- `OpenJTalk`
+- `UserDictionary`
+- `UserDictionary/Word`
+- `UserDictionary/WordType`
 
 ### Configuration Options
 
-- ``TTSOptions``
-- ``AccelerationMode``
+- `TTSOptions`
+- `AccelerationMode`
 
 ### Synthesis Options
 
-- ``SynthesisOptions``
+- `SynthesisOptions`

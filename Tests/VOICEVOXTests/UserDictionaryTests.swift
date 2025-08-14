@@ -45,7 +45,7 @@ struct UserDictionaryTests {
   @Test
   func testUserDictionaryAddWord() throws {
     let dictionary = UserDictionary()
-    let word = UserDictionary.Word(
+    var word = UserDictionary.Word(
       surface: "VOICEVOX",
       pronunciation: "ボイスボックス",
       accentType: 4,
@@ -54,7 +54,8 @@ struct UserDictionaryTests {
     )
 
     do {
-      _ = try dictionary.addWord(word)
+      try dictionary.addWord(&word)
+      #expect(word.id != UUID())
     } catch {
       Issue.record("Unexpected error: \(error)")
     }
@@ -65,14 +66,16 @@ struct UserDictionaryTests {
     let dictionary = UserDictionary()
 
     do {
-      let originalWord = UserDictionary.Word(
+      var originalWord = UserDictionary.Word(
         surface: "初期値",
         pronunciation: "ショキチ",
         accentType: 1
       )
-      let uuid = try dictionary.addWord(originalWord)
+      try dictionary.addWord(&originalWord)
+      let uuid = originalWord.id
 
       let updatedWord = UserDictionary.Word(
+        id: uuid,
         surface: "更新値",
         pronunciation: "コウシンチ",
         accentType: 2,
@@ -80,7 +83,7 @@ struct UserDictionaryTests {
         priority: 8
       )
 
-      try dictionary.updateWord(uuid: uuid, word: updatedWord)
+      try dictionary.updateWord(updatedWord)
     } catch {
       Issue.record("Unexpected error: \(error)")
     }
@@ -91,13 +94,13 @@ struct UserDictionaryTests {
     let dictionary = UserDictionary()
 
     do {
-      let word = UserDictionary.Word(
+      var word = UserDictionary.Word(
         surface: "削除対象",
         pronunciation: "サクジョタイショウ",
         accentType: 5
       )
-      let uuid = try dictionary.addWord(word)
-      try dictionary.removeWord(uuid: uuid)
+      try dictionary.addWord(&word)
+      try dictionary.removeWord(id: word.id)
     } catch {
       Issue.record("Unexpected error: \(error)")
     }
@@ -109,19 +112,19 @@ struct UserDictionaryTests {
     let dictionary2 = UserDictionary()
 
     do {
-      let word1 = UserDictionary.Word(
+      var word1 = UserDictionary.Word(
         surface: "単語1",
         pronunciation: "タンゴイチ",
         accentType: 3
       )
-      let word2 = UserDictionary.Word(
+      var word2 = UserDictionary.Word(
         surface: "単語2",
         pronunciation: "タンゴニ",
         accentType: 2
       )
 
-      _ = try dictionary2.addWord(word1)
-      _ = try dictionary2.addWord(word2)
+      try dictionary2.addWord(&word1)
+      try dictionary2.addWord(&word2)
 
       try dictionary1.importDictionary(dictionary2)
     } catch {
@@ -134,21 +137,21 @@ struct UserDictionaryTests {
     let dictionary = UserDictionary()
 
     do {
-      let word1 = UserDictionary.Word(
+      var word1 = UserDictionary.Word(
         surface: "JSON",
         pronunciation: "ジェイソン",
         accentType: 3,
         wordType: .properNoun
       )
-      let word2 = UserDictionary.Word(
+      var word2 = UserDictionary.Word(
         surface: "API",
         pronunciation: "エーピーアイ",
         accentType: 4,
         wordType: .properNoun
       )
 
-      _ = try dictionary.addWord(word1)
-      _ = try dictionary.addWord(word2)
+      try dictionary.addWord(&word1)
+      try dictionary.addWord(&word2)
 
       let jsonData = try dictionary.toJSON()
       #expect(!jsonData.isEmpty)
@@ -164,12 +167,12 @@ struct UserDictionaryTests {
     let dictionary1 = UserDictionary()
 
     do {
-      let word = UserDictionary.Word(
+      var word = UserDictionary.Word(
         surface: "保存テスト",
         pronunciation: "ホゾンテスト",
         accentType: 5
       )
-      _ = try dictionary1.addWord(word)
+      try dictionary1.addWord(&word)
 
       let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_user_dict.json")
       defer {
@@ -202,14 +205,14 @@ struct UserDictionaryTests {
 
     do {
       for wordType in wordTypes {
-        let word = UserDictionary.Word(
+        var word = UserDictionary.Word(
           surface: "テスト\(wordType)",
           pronunciation: "テスト",
           accentType: 1,
           wordType: wordType
         )
 
-        _ = try dictionary.addWord(word)
+        try dictionary.addWord(&word)
       }
     } catch {
       Issue.record("Unexpected error: \(error)")
@@ -221,21 +224,21 @@ struct UserDictionaryTests {
     let dictionary = UserDictionary()
 
     do {
-      let lowPriorityWord = UserDictionary.Word(
+      var lowPriorityWord = UserDictionary.Word(
         surface: "低優先度",
         pronunciation: "テイユウセンド",
         accentType: 1,
         priority: 1
       )
-      _ = try dictionary.addWord(lowPriorityWord)
+      try dictionary.addWord(&lowPriorityWord)
 
-      let highPriorityWord = UserDictionary.Word(
+      var highPriorityWord = UserDictionary.Word(
         surface: "高優先度",
         pronunciation: "コウユウセンド",
         accentType: 1,
         priority: 10
       )
-      _ = try dictionary.addWord(highPriorityWord)
+      try dictionary.addWord(&highPriorityWord)
     } catch {
       Issue.record("Unexpected error: \(error)")
     }
