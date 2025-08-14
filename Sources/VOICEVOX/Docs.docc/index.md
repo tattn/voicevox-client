@@ -99,12 +99,13 @@ let techWord = UserDictionary.Word(
 )
 _ = try dictionary.addWord(techWord)
 
-// Apply dictionary to OpenJTalk
-let openJTalk = try await OpenJTalk(openJTalkDictionaryURL: dictURL)
-try await openJTalk.useUserDictionary(dictionary)
+// Initialize synthesizer with configuration
+let synthesizer = try await Synthesizer(configuration: config)
+
+// Apply the user dictionary to the synthesizer
+try await synthesizer.setUserDictionary(dictionary)
 
 // Now synthesis will use your custom pronunciations
-let synthesizer = try await Synthesizer(configuration: config)
 let audioData = try await synthesizer.synthesize(
     text: "VOICEVOXをSwiftで使う",
     styleId: 0

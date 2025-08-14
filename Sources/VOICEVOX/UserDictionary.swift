@@ -2,10 +2,46 @@ import Foundation
 import os
 import voicevox_common
 
+private struct JSONWord: Decodable {
+  let surface: String
+  let priority: UInt32
+  let contextId: Int
+  let partOfSpeech: String
+  let partOfSpeechDetail1: String
+  let partOfSpeechDetail2: String
+  let partOfSpeechDetail3: String
+  let inflectionalType: String
+  let inflectionalForm: String
+  let stem: String
+  let yomi: String
+  let pronunciation: String
+  let accentType: Int
+  let moraCount: Int
+  let accentAssociativeRule: String
+
+  enum CodingKeys: String, CodingKey {
+    case surface
+    case priority
+    case contextId = "context_id"
+    case partOfSpeech = "part_of_speech"
+    case partOfSpeechDetail1 = "part_of_speech_detail_1"
+    case partOfSpeechDetail2 = "part_of_speech_detail_2"
+    case partOfSpeechDetail3 = "part_of_speech_detail_3"
+    case inflectionalType = "inflectional_type"
+    case inflectionalForm = "inflectional_form"
+    case stem
+    case yomi
+    case pronunciation
+    case accentType = "accent_type"
+    case moraCount = "mora_count"
+    case accentAssociativeRule = "accent_associative_rule"
+  }
+}
+
 /// User dictionary
 public final class UserDictionary: @unchecked Sendable {
   /// Word types that can be registered in the user dictionary
-  public enum WordType: Int32, CaseIterable, Sendable {
+  public enum WordType: Int32, CaseIterable, Sendable, Identifiable, Equatable, Hashable {
     /// Proper noun
     case properNoun = 0
     /// Common noun
@@ -17,38 +53,47 @@ public final class UserDictionary: @unchecked Sendable {
     /// Suffix
     case suffix = 4
 
+    public var id: Self {
+      self
+    }
+
     var cValue: Int32 {
       rawValue
     }
   }
 
   /// Word to be registered in the user dictionary
-  public struct Word: Sendable {
+  public struct Word: Sendable, Identifiable, Equatable, Hashable {
+    /// Unique identifier
+    public var id: UUID
     /// Surface form (kanji, hiragana, katakana, alphanumeric, etc.)
-    public let surface: String
+    public var surface: String
     /// Pronunciation (katakana)
-    public let pronunciation: String
+    public var pronunciation: String
     /// Accent type (integer >= 1)
-    public let accentType: Int
+    public var accentType: Int
     /// Word type
-    public let wordType: WordType
+    public var wordType: WordType
     /// Priority (integer >= 1, default 5)
-    public let priority: UInt32
+    public var priority: UInt32
 
     /// Creates a new word
     /// - Parameters:
+    ///   - id: Unique identifier (auto-generated if not provided)
     ///   - surface: Surface form
     ///   - pronunciation: Pronunciation (katakana)
     ///   - accentType: Accent type (>= 1)
     ///   - wordType: Word type (default: proper noun)
     ///   - priority: Priority (>= 1, default 5)
     public init(
+      id: UUID = UUID(),
       surface: String,
       pronunciation: String,
       accentType: Int,
       wordType: WordType = .properNoun,
       priority: UInt32 = 5
     ) {
+      self.id = id
       self.surface = surface
       self.pronunciation = pronunciation
       self.accentType = accentType
@@ -265,6 +310,49 @@ public final class UserDictionary: @unchecked Sendable {
 
       defer { voicevox_json_free(jsonPtr) }
       return Data(bytes: jsonPtr, count: strlen(jsonPtr))
+    }
+  }
+
+  /// Gets all words in the dictionary
+  /// - Returns: Array of all words in the dictionary
+  /// - Throws: ``VOICEVOXError/userDictError(operation:details:)`` if the operation fails
+  public func words() throws(VOICEVOXError) -> [Word] {
+    let jsonData = try toJSON()
+
+    do {
+      let jsonDict = try JSONDecoder().decode([String: JSONWord].self, from: jsonData)
+      return jsonDict.map { uuid, jsonWord in
+        Word(
+          id: UUID(uuidString: uuid) ?? UUID(),
+          surface: jsonWord.surface,
+          pronunciation: jsonWord.pronunciation,
+          accentType: jsonWord.accentType,
+          wordType: mapWordType(from: jsonWord),
+          priority: jsonWord.priority
+        )
+      }
+    } catch {
+      throw VOICEVOXError.userDictError(
+        operation: "words",
+        details: "Failed to decode user dictionary JSON: \(error)"
+      )
+    }
+  }
+
+  private func mapWordType(from jsonWord: JSONWord) -> WordType {
+    switch (jsonWord.partOfSpeech, jsonWord.partOfSpeechDetail1) {
+    case ("名詞", "固有名詞"):
+      return .properNoun
+    case ("名詞", _):
+      return .commonNoun
+    case ("動詞", _):
+      return .verb
+    case ("形容詞", _):
+      return .adjective
+    case ("接尾辞", _), ("接尾", _):
+      return .suffix
+    default:
+      return .properNoun
     }
   }
 

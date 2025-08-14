@@ -10,8 +10,8 @@ public actor Synthesizer {
   /// The native synthesizer wrapper from VOICEVOX Core.
   private let synthesizer: CoreSynthesizer
 
-  /// The user dictionary instance.
-  private var userDictionary: UserDictionary?
+  /// The user dictionary
+  public private(set) var userDictionary: UserDictionary?
 
   /// Creates and initializes a new synthesizer instance with the specified configuration.
   ///
@@ -103,13 +103,6 @@ public actor Synthesizer {
     if let userDictionary {
       try synthesizer.openJTalk.useUserDictionary(userDictionary)
     }
-  }
-
-  /// Gets the current user dictionary.
-  ///
-  /// - Returns: The currently set user dictionary, or nil if no dictionary is set.
-  public func getUserDictionary() async -> UserDictionary? {
-    userDictionary
   }
 
   /// Retrieves metadata for all currently loaded voice models.

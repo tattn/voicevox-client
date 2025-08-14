@@ -12,6 +12,8 @@ excluded:
 # Rules Configuration
 disabled_rules:
   - todo
+  - non_optional_string_data_conversion
+  - optional_data_string_conversion
   - trailing_whitespace # handled by SwiftFormat
   - trailing_comma # against swift-format
   - opening_brace # against swift-format

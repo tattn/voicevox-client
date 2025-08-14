@@ -240,4 +240,84 @@ struct UserDictionaryTests {
       Issue.record("Unexpected error: \(error)")
     }
   }
+
+  @Test
+  func testWordIdentifiable() {
+    let word1 = UserDictionary.Word(
+      surface: "単語1",
+      pronunciation: "タンゴイチ",
+      accentType: 1
+    )
+    let word2 = UserDictionary.Word(
+      surface: "単語2",
+      pronunciation: "タンゴニ",
+      accentType: 2
+    )
+
+    #expect(word1.id != word2.id)
+    #expect(type(of: word1.id) == UUID.self)
+  }
+
+  @Test
+  func testWordEquatable() {
+    let id = UUID()
+    let word1 = UserDictionary.Word(
+      id: id,
+      surface: "単語",
+      pronunciation: "タンゴ",
+      accentType: 1
+    )
+    let word2 = UserDictionary.Word(
+      id: id,
+      surface: "単語",
+      pronunciation: "タンゴ",
+      accentType: 1
+    )
+    let word3 = UserDictionary.Word(
+      surface: "単語",
+      pronunciation: "タンゴ",
+      accentType: 1
+    )
+
+    #expect(word1 == word2)
+    #expect(word1 != word3)
+  }
+
+  @Test
+  func testWordHashable() {
+    let word = UserDictionary.Word(
+      surface: "テスト",
+      pronunciation: "テスト",
+      accentType: 1
+    )
+
+    var set = Set<UserDictionary.Word>()
+    set.insert(word)
+    #expect(set.contains(word))
+
+    let dictionary = [word: "value"]
+    #expect(dictionary[word] == "value")
+  }
+
+  @Test
+  func testWordTypeEquatable() {
+    let wordType1 = UserDictionary.WordType.properNoun
+    let wordType2 = UserDictionary.WordType.properNoun
+    let wordType3 = UserDictionary.WordType.commonNoun
+
+    #expect(wordType1 == wordType2)
+    #expect(wordType1 != wordType3)
+  }
+
+  @Test
+  func testWordTypeHashable() {
+    let wordType = UserDictionary.WordType.verb
+
+    var set = Set<UserDictionary.WordType>()
+    set.insert(wordType)
+    #expect(set.contains(wordType))
+
+    let dictionary = [wordType: "value"]
+    #expect(dictionary[wordType] == "value")
+  }
 }
