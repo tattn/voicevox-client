@@ -5,10 +5,10 @@ import voicevox_common
 
 /// Represents an audio query for speech synthesis.
 /// This structure contains all parameters needed to generate speech audio from text.
-public struct AudioQuery: Codable, Sendable {
+public struct AudioQuery: Codable, Sendable, Equatable {
   /// Represents a mora (phonetic unit) in Japanese speech synthesis.
   /// A mora is a fundamental timing unit in Japanese phonology.
-  public struct Mora: Codable, Sendable {
+  public struct Mora: Codable, Sendable, Equatable {
     /// The text representation of the mora
     public var text: String
 
@@ -64,7 +64,7 @@ public struct AudioQuery: Codable, Sendable {
 
   /// Represents an accent phrase in Japanese speech synthesis.
   /// An accent phrase is a phonological unit that contains one or more moras with a specific accent pattern.
-  public struct AccentPhrase: Codable, Sendable {
+  public struct AccentPhrase: Codable, Sendable, Equatable {
     /// Array of moras that make up the phrase
     public var moras: [Mora]
 
