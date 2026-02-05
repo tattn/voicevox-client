@@ -27,23 +27,38 @@ if [ -d "$VVMS_DIR" ] && [ -d "$DICT_DIR" ] && [ -f "$CORE_LIB" ] && [ -f "$ONNX
 fi
 
 echo "Downloading VOICEVOX resources..."
-curl -L https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.0/download-osx-arm64 -o download
+curl -L https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.3/download-osx-arm64 -o download
 chmod +x download
 
 echo "Extracting VOICEVOX resources..."
-echo -e "y\n" | ./download --output voicevox_resources  --only models
-echo -e "y\n" | ./download --output voicevox_resources  --only dict
-echo -e "y\n" | ./download --output voicevox_resources  --only onnxruntime
+run_download() {
+    local only="$1"
+    if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+        printf "y\n" | ./download --output voicevox_resources --only "$only"
+        return
+    fi
+
+    # Avoid pager errors by running under a pseudo-TTY locally.
+    if command -v script >/dev/null 2>&1; then
+        printf "y\n" | script -q /dev/null bash -lc "PAGER=/bin/cat ./download --output voicevox_resources --only $only"
+    else
+        printf "y\n" | PAGER=/bin/cat ./download --output voicevox_resources --only "$only"
+    fi
+}
+
+run_download models
+run_download dict
+run_download onnxruntime
 
 echo "Downloading VOICEVOX Core library..."
-curl -L https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.0/voicevox_core-osx-arm64-0.16.0.zip -o voicevox_core.zip
+curl -L https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.3/voicevox_core-osx-arm64-0.16.3.zip -o voicevox_core.zip
 unzip -q voicevox_core.zip
 
 echo "Setting up VOICEVOX resources..."
 mkdir -p ./Example/VOICEVOXExample/lib
 cp -r voicevox_resources/models/vvms ./Example/VOICEVOXExample/lib
 cp -r voicevox_resources/dict/open_jtalk_dic_utf_8-1.11 ./Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
-cp voicevox_core-osx-arm64-0.16.0/lib/libvoicevox_core.dylib ./Example/VOICEVOXExample/lib
+cp voicevox_core-osx-arm64-0.16.3/lib/libvoicevox_core.dylib ./Example/VOICEVOXExample/lib
 cp voicevox_resources/onnxruntime/lib/libvoicevox_onnxruntime.1.17.3.dylib ./Example/VOICEVOXExample/lib
 
 echo "Updating dylib install names..."
@@ -53,6 +68,6 @@ install_name_tool -id @rpath/libvoicevox_core.dylib ./Example/VOICEVOXExample/li
 rm -f download
 rm -f voicevox_core.zip
 rm -rf voicevox_resources
-rm -rf voicevox_core-osx-arm64-0.16.0
+rm -rf voicevox_core-osx-arm64-0.16.3
 
 echo "VOICEVOX resources setup complete!"
