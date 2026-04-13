@@ -126,3 +126,5 @@ iOSInjectionProject/
 scripts/*
 !scripts/setup-voicevox-resources.sh
 !scripts/build_release_archive.sh
+!scripts/generate_homebrew_formula.sh
+!scripts/verify_homebrew_formula.sh

@@ -9,6 +9,13 @@ An unofficial VOICEVOX client for iOS and macOS.
 
 ## CLI
 
+### Install with Homebrew
+
+```bash
+brew tap tattn/voicevox-client
+brew install voicevox-client
+```
+
 ### Setup
 
 ```bash

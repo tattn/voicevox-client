@@ -14,6 +14,7 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   GITHUB_TOKEN: ${{ github.token }}
+  HOMEBREW_TAP_REPOSITORY: tattn/homebrew-voicevox-client
 
 concurrency:
   group: release-${{ inputs.tag }}
@@ -115,3 +116,74 @@ jobs:
             --title "$RELEASE_TAG" \
             --notes "" \
             dist/*
+
+  update-homebrew-formula:
+    needs: publish-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve version and tag
+        run: |
+          tag="${{ inputs.tag }}"
+          version="${tag#v}"
+          echo "RELEASE_TAG=${tag}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Require Homebrew tap token
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [[ -z "$HOMEBREW_TAP_TOKEN" ]]; then
+            echo "HOMEBREW_TAP_TOKEN secret is required to push to ${HOMEBREW_TAP_REPOSITORY}." >&2
+            exit 1
+          fi
+
+      - name: Download checksum assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "$RELEASE_TAG" -R "${{ github.repository }}" --pattern "*.sha256" --dir dist
+
+      - name: Prepare Homebrew tap repository
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          rm -rf homebrew-tap
+          mkdir homebrew-tap
+          cd homebrew-tap
+          git init -b main
+          git remote add origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${HOMEBREW_TAP_REPOSITORY}.git"
+          if git ls-remote --exit-code origin main >/dev/null 2>&1; then
+            git fetch --depth=1 origin main
+            git checkout -B main origin/main
+          fi
+
+      - name: Generate Homebrew formula
+        run: |
+          arm64_url="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/voicevox-client-${RELEASE_VERSION}-macos-arm64.tar.gz"
+          x86_64_url="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/voicevox-client-${RELEASE_VERSION}-macos-x86_64.tar.gz"
+          arm64_sha256="$(awk '{print $1}' "dist/voicevox-client-${RELEASE_VERSION}-macos-arm64.tar.gz.sha256")"
+          x86_64_sha256="$(awk '{print $1}' "dist/voicevox-client-${RELEASE_VERSION}-macos-x86_64.tar.gz.sha256")"
+
+          ./scripts/generate_homebrew_formula.sh \
+            --arm64-url "$arm64_url" \
+            --arm64-sha256 "$arm64_sha256" \
+            --x86_64-url "$x86_64_url" \
+            --x86_64-sha256 "$x86_64_sha256" \
+            --homepage "https://github.com/${{ github.repository }}" \
+            --version "$RELEASE_VERSION" \
+            --output "homebrew-tap/Formula/voicevox-client.rb"
+
+      - name: Commit updated formula to tap repository
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/voicevox-client.rb
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Update Homebrew formula for ${RELEASE_TAG}"
+          git push origin main

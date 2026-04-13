@@ -50,6 +50,7 @@ arch="$(uname -m)"
 stage_dir="$(mktemp -d)"
 archive_name="voicevox-client-${version}-macos-${arch}.tar.gz"
 archive_path="${output_dir}/${archive_name}"
+resources_dir="${repo_root}/Example/VOICEVOXExample/lib"
 
 cleanup() {
   rm -rf "$stage_dir"
@@ -60,8 +61,13 @@ mkdir -p "$output_dir"
 
 swift build -c release --product voicevox-client
 cp "${repo_root}/.build/release/voicevox-client" "${stage_dir}/voicevox-client"
+cp "${resources_dir}/libvoicevox_core.dylib" "${stage_dir}/libvoicevox_core.dylib"
+cp "${resources_dir}/libvoicevox_onnxruntime.1.17.3.dylib" "${stage_dir}/libvoicevox_onnxruntime.1.17.3.dylib"
 chmod +x "${stage_dir}/voicevox-client"
-tar -C "$stage_dir" -czf "$archive_path" voicevox-client
+tar -C "$stage_dir" -czf "$archive_path" \
+  voicevox-client \
+  libvoicevox_core.dylib \
+  libvoicevox_onnxruntime.1.17.3.dylib
 shasum -a 256 "$archive_path" > "${archive_path}.sha256"
 
 echo "$archive_path"
