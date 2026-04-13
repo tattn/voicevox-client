@@ -125,3 +125,4 @@ iOSInjectionProject/
 .claude
 scripts/*
 !scripts/setup-voicevox-resources.sh
+!scripts/build_release_archive.sh

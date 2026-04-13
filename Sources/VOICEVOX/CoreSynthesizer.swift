@@ -219,6 +219,101 @@ final class CoreSynthesizer {
     return updatedAudioQuery
   }
 
+  // MARK: - Kana (AquesTalk-like notation) Methods
+
+  /// Creates an audio query from AquesTalk-like kana notation.
+  ///
+  /// - Parameters:
+  ///   - kana: The AquesTalk-like kana notation string (e.g., `"コンニチワ'"`)
+  ///   - styleId: The voice style identifier from a loaded voice model.
+  /// - Returns: ``AudioQuery`` containing all parameters needed for synthesis.
+  /// - Throws: ``VOICEVOXError`` if the audio query creation fails.
+  func makeAudioQueryFromKana(kana: String, styleId: UInt32) throws(VOICEVOXError) -> AudioQuery {
+    var audioQueryJson: UnsafeMutablePointer<CChar>?
+    let resultCode = voicevox_synthesizer_create_audio_query_from_kana(
+      pointer,
+      kana,
+      VoicevoxStyleId(styleId),
+      &audioQueryJson
+    )
+
+    guard resultCode == 0, let audioQueryJson else {
+      throw .synthesisFailed(
+        text: kana,
+        styleId: styleId,
+        reason: "Failed to create audio query from kana (error code: \(resultCode))"
+      )
+    }
+
+    defer { voicevox_json_free(audioQueryJson) }
+    return try AudioQuery(from: Data(bytes: audioQueryJson, count: strlen(audioQueryJson)))
+  }
+
+  /// Creates accent phrases from AquesTalk-like kana notation.
+  ///
+  /// - Parameters:
+  ///   - kana: The AquesTalk-like kana notation string (e.g., `"コンニチワ'"`)
+  ///   - styleId: The voice style identifier from a loaded voice model.
+  /// - Returns: An array of ``AudioQuery/AccentPhrase`` decoded from the result.
+  /// - Throws: ``VOICEVOXError`` if the accent phrase creation fails.
+  func createAccentPhrasesFromKana(kana: String, styleId: UInt32) throws(VOICEVOXError) -> [AudioQuery.AccentPhrase] {
+    var accentPhrasesJson: UnsafeMutablePointer<CChar>?
+    let resultCode = voicevox_synthesizer_create_accent_phrases_from_kana(
+      pointer,
+      kana,
+      VoicevoxStyleId(styleId),
+      &accentPhrasesJson
+    )
+
+    guard resultCode == 0, let accentPhrasesJson else {
+      throw .synthesisFailed(
+        text: kana,
+        styleId: styleId,
+        reason: "Failed to create accent phrases from kana (error code: \(resultCode))"
+      )
+    }
+
+    defer { voicevox_json_free(accentPhrasesJson) }
+    return try decodeAccentPhrases(from: accentPhrasesJson, styleId: styleId)
+  }
+
+  /// Synthesizes speech directly from AquesTalk-like kana notation.
+  ///
+  /// - Parameters:
+  ///   - kana: The AquesTalk-like kana notation string (e.g., `"コンニチワ'"`)
+  ///   - styleId: The voice style identifier from a loaded voice model.
+  ///   - options: TTS options controlling synthesis behavior.
+  /// - Returns: Audio data in WAV format.
+  /// - Throws: ``VOICEVOXError`` if the synthesis fails.
+  func ttsFromKana(
+    kana: String,
+    styleId: UInt32,
+    options: VoicevoxTtsOptions
+  ) throws(VOICEVOXError) -> Data {
+    var wavLength: UInt = 0
+    var wavBuffer: UnsafeMutablePointer<UInt8>?
+
+    let resultCode = voicevox_synthesizer_tts_from_kana(
+      pointer,
+      kana,
+      VoicevoxStyleId(styleId),
+      options,
+      &wavLength,
+      &wavBuffer
+    )
+
+    guard resultCode == 0, let wavBuffer, wavLength > 0 else {
+      throw .synthesisFailed(
+        text: kana,
+        styleId: styleId,
+        reason: "TTS from kana failed with error code \(resultCode). Check style ID and voice model."
+      )
+    }
+
+    defer { voicevox_wav_free(wavBuffer) }
+    return Data(bytes: wavBuffer, count: Int(wavLength))
+  }
+
   // MARK: - Private Helper Methods
 
   private func encodeAccentPhrases(

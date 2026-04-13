@@ -7,85 +7,60 @@
 
 An unofficial VOICEVOX client for iOS and macOS.
 
-## Setup for the example app
+## CLI
 
-### Automatic Setup
+### Setup
 
-Run the setup script to automatically download and configure all required resources:
+```bash
+voicevox-client setup
+```
+
+Resources are saved to `~/.voicevox-client/resources/`.
+
+### Usage
+
+```bash
+# Synthesize speech (uses default resources)
+voicevox-client --text "こんにちは"
+
+# Specify style and output
+voicevox-client --text "こんにちは" --style-id 1 --output greeting.wav
+
+# Adjust speech parameters
+voicevox-client --text "こんにちは" --speed 1.2 --pitch 0.8
+
+# AquesTalk-like kana notation (control accent directly)
+voicevox-client --text "コンニチワ'" --kana
+
+# List available speakers
+voicevox-client speakers
+```
+
+## Swift Library
+
+The API documentation is available [here](https://tattn.github.io/voicevox-client/documentation/voicevox).
+
+```swift
+import VOICEVOX
+
+let config = VOICEVOXConfiguration(
+    openJTalkDictionaryURL: Bundle.main.url(forResource: "open_jtalk_dic", withExtension: nil)!
+)
+
+let synthesizer = try await Synthesizer(configuration: config)
+try await synthesizer.loadVoiceModel(from: modelURL)
+
+let audioData = try await synthesizer.synthesize(text: "こんにちは", styleId: 0)
+
+// AquesTalk-like kana notation for direct accent control
+let audioData = try await synthesizer.synthesize(kana: "コンニチワ'", styleId: 0)
+```
+
+## Example App Setup
 
 ```bash
 ./scripts/setup-voicevox-resources.sh
 ```
 
-This script will download and set up:
-
-- **VOICEVOX Core library** (`libvoicevox_core.dylib`)
-- **ONNX Runtime library** (`libvoicevox_onnxruntime.dylib`)
-- **Open JTalk dictionary** - Japanese text analysis dictionary
-- **VVM files** - VOICEVOX voice model files
-
-<details>
-<summary><h3>Manual Setup</h3></summary>
-
-If you prefer manual setup, you need to provide and save the resources in `./Example/VOICEVOXExample/lib`:
-
-- **VOICEVOX Core library** (`libvoicevox_core.dylib`)
-- **ONNX Runtime library** (`libvoicevox_onnxruntime.1.17.3.dylib`)
-- **Open JTalk dictionary** - Japanese text analysis dictionary
-- **VVM files** - VOICEVOX voice model files
-
-```
-lib
-├── libvoicevox_core.dylib
-├── libvoicevox_onnxruntime.1.17.3.dylib
-├── open_jtalk_dic_utf_8
-│   ├── char.bin
-│   └── ...
-└── vvms
-    ├── 0.vvm
-    └── ...
-```
-
-Refer to the [VOICEVOX documentation](https://github.com/VOICEVOX/voicevox_core/blob/main/docs/guide/user/downloader.md) for details.
-
-</details>
-
-## Quick Start
-
-The API documentation is available [here](https://tattn.github.io/voicevox-client/documentation/voicevox).
-
-You need to download the required resources:
-
-- `open_jtalk_dic`
-- `.vvm` files
-- `libvoicevox_core.dylib` (macOS only)
-- `libvoicevox_onnxruntime.dylib` (macOS only)
-
-All files must be included in your application bundle.
-
-For detailed setup instructions, see the [VOICEVOX documentation](https://github.com/VOICEVOX/voicevox_core/blob/main/docs/guide/user/usage.md).
-
-```swift
-import VOICEVOX
-
-// Configure
-let config = VOICEVOXConfiguration(
-    openJTalkDictionaryURL: URL(fileURLWithPath: "/path/to/open_jtalk_dic")
-)
-
-// Initialize
-let synthesizer = try await Synthesizer(configuration: config)
-
-// Load voice model
-let modelURL = URL(fileURLWithPath: "/path/to/model.vvm")
-let modelID = try await synthesizer.loadVoiceModel(from: modelURL)
-
-// Generate speech
-let audioData = try await synthesizer.synthesize(
-    text: "こんにちは",
-    styleId: 0,
-    options: TTSOptions(enableInterrogativeUpspeak: true)
-)
-
-// audioData contains WAV format audio ready for playback
-```
+This downloads VOICEVOX Core, ONNX Runtime, OpenJTalk dictionary, and voice models to `Example/VOICEVOXExample/lib/`.
+If you hit GitHub release rate limits, set `GITHUB_TOKEN` or `GH_TOKEN` before running it.

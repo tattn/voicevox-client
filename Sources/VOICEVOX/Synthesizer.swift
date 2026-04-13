@@ -219,6 +219,76 @@ public actor Synthesizer {
     return try synthesizer.synthesize(audioQuery: audioQuery, styleId: styleId, options: synthOptions)
   }
 
+  /// Creates an audio query from AquesTalk-like kana notation.
+  ///
+  /// AquesTalk-like notation uses katakana with special symbols to control accent and intonation:
+  /// - `'` marks the accent position (required once per accent phrase)
+  /// - `/` separates accent phrases
+  /// - `、` separates accent phrases with a pause
+  /// - `_` before a kana marks it as unvoiced
+  /// - `？` at the end marks interrogative intonation
+  ///
+  /// Example: `"ディイプラ'アニングワ/バンノ'オヤクデワ/アリマセ'ン"`
+  ///
+  /// - Parameters:
+  ///   - kana: The AquesTalk-like kana notation string.
+  ///   - styleId: The voice style identifier. This must correspond to a style
+  ///     available in the currently loaded voice models.
+  ///
+  /// - Returns: An `AudioQuery` object containing synthesis parameters.
+  ///
+  /// - Throws: `VOICEVOXError` if the audio query creation fails.
+  public func makeAudioQuery(
+    kana: String,
+    styleId: UInt32
+  ) async throws(VOICEVOXError) -> AudioQuery {
+    try synthesizer.makeAudioQueryFromKana(kana: kana, styleId: styleId)
+  }
+
+  /// Creates accent phrases from AquesTalk-like kana notation.
+  ///
+  /// This method parses the kana notation and generates accent phrases with mora-level
+  /// pitch and timing data for the specified voice style.
+  ///
+  /// - Parameters:
+  ///   - kana: The AquesTalk-like kana notation string.
+  ///   - styleId: The voice style identifier. This must correspond to a style
+  ///     available in the currently loaded voice models.
+  ///
+  /// - Returns: An array of `AudioQuery.AccentPhrase` objects.
+  ///
+  /// - Throws: `VOICEVOXError` if the accent phrase creation fails.
+  public func createAccentPhrases(
+    kana: String,
+    styleId: UInt32
+  ) async throws(VOICEVOXError) -> [AudioQuery.AccentPhrase] {
+    try synthesizer.createAccentPhrasesFromKana(kana: kana, styleId: styleId)
+  }
+
+  /// Synthesizes speech from AquesTalk-like kana notation.
+  ///
+  /// This is a convenience method that directly converts kana notation to audio data
+  /// without exposing the intermediate AudioQuery.
+  ///
+  /// - Parameters:
+  ///   - kana: The AquesTalk-like kana notation string.
+  ///   - styleId: The voice style identifier. This must correspond to a style
+  ///     available in the currently loaded voice models.
+  ///   - options: Additional synthesis options (defaults to standard options).
+  ///
+  /// - Returns: Audio data in WAV format ready for playback or further processing.
+  ///
+  /// - Throws: `VOICEVOXError.synthesisFailed` if the synthesis process fails.
+  public func synthesize(
+    kana: String,
+    styleId: UInt32,
+    options: TTSOptions = .standard
+  ) async throws(VOICEVOXError) -> Data {
+    var ttsOptions = voicevox_make_default_tts_options()
+    ttsOptions.enable_interrogative_upspeak = options.enableInterrogativeUpspeak
+    return try synthesizer.ttsFromKana(kana: kana, styleId: styleId, options: ttsOptions)
+  }
+
   /// Replaces mora data (pitch and phoneme length) in an audio query with values generated for a specific voice style.
   ///
   /// This method takes an existing AudioQuery and regenerates the mora pitch and phoneme length values

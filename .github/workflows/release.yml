@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag such as v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GITHUB_TOKEN: ${{ github.token }}
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build-binaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            arch: arm64
+          - runner: macos-26-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select latest Xcode
+        run: |
+          latest_xcode="$(ls -d /Applications/Xcode*.app | sort -V | tail -n1)"
+          echo "DEVELOPER_DIR=${latest_xcode}/Contents/Developer" >> "$GITHUB_ENV"
+
+      - name: Resolve version and tag
+        run: |
+          tag="${{ inputs.tag }}"
+          version="${tag#v}"
+          echo "RELEASE_TAG=${tag}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Cache VOICEVOX resources
+        id: cache-voicevox
+        uses: actions/cache@v4
+        with:
+          path: |
+            Example/VOICEVOXExample/lib/vvms
+            Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+            Example/VOICEVOXExample/lib/*.dylib
+          key: voicevox-resources-v0.16.3-${{ matrix.arch }}
+
+      - name: Setup VOICEVOX resources
+        if: steps.cache-voicevox.outputs.cache-hit != 'true'
+        run: ./scripts/setup-voicevox-resources.sh
+
+      - name: Build release archive
+        run: ./scripts/build_release_archive.sh --version "$RELEASE_VERSION"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.arch }}
+          path: |
+            dist/voicevox-client-${{ env.RELEASE_VERSION }}-macos-${{ matrix.arch }}.tar.gz
+            dist/voicevox-client-${{ env.RELEASE_VERSION }}-macos-${{ matrix.arch }}.tar.gz.sha256
+          if-no-files-found: error
+
+  publish-release:
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version and tag
+        run: |
+          tag="${{ inputs.tag }}"
+          version="${tag#v}"
+          echo "RELEASE_TAG=${tag}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Ensure tag does not already exist
+        run: |
+          if git rev-parse "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Tag $RELEASE_TAG already exists." >&2
+            exit 1
+          fi
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: release-assets-*
+          merge-multiple: true
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
+
+      - name: Create GitHub Release and upload assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_TAG" -R "${{ github.repository }}" \
+            --title "$RELEASE_TAG" \
+            --notes "" \
+            dist/*

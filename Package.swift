@@ -12,10 +12,15 @@ let package = Package(
     .library(
       name: "VOICEVOX",
       targets: ["VOICEVOX"]
-    )
+    ),
+    .executable(
+      name: "voicevox-client",
+      targets: ["voicevox-client"]
+    ),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.4.0")
+    .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.4.0"),
+    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
   ],
   targets: [
     .target(
@@ -33,6 +38,25 @@ let package = Package(
             "-lvoicevox_core",
             "-lvoicevox_onnxruntime.1.17.3",
             "-Xlinker", "-rpath", "-Xlinker", "@loader_path/../Resources/voicevox-client_VOICEVOXTests.bundle/Contents/Resources/lib",
+          ],
+          .when(platforms: [.macOS])
+        )
+      ]
+    ),
+
+    .executableTarget(
+      name: "voicevox-client",
+      dependencies: [
+        "VOICEVOX",
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+      ],
+      linkerSettings: [
+        .unsafeFlags(
+          [
+            "-L", "Example/VOICEVOXExample/lib",
+            "-lvoicevox_core",
+            "-lvoicevox_onnxruntime.1.17.3",
+            "-Xlinker", "-rpath", "-Xlinker", "@executable_path",
           ],
           .when(platforms: [.macOS])
         )
