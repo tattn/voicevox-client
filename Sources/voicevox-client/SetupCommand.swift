@@ -6,7 +6,7 @@ struct Setup: AsyncParsableCommand {
     abstract: "Download and set up VOICEVOX resources"
   )
 
-  @Option(name: .shortAndLong, help: "Output directory for resources (default: ~/.voicevox-client/resources)")
+  @Option(name: .shortAndLong, help: "Output directory for resources (default: $VOICEVOX_CLIENT_HOME/resources or ~/.voicevox-client/resources)")
   var output: String?
 
   @Option(name: .long, help: "VOICEVOX Core version")
@@ -15,6 +15,7 @@ struct Setup: AsyncParsableCommand {
   func run() async throws {
     let fm = FileManager.default
     let outputPath = output ?? DefaultPaths.resourcesDir
+    print("Using resources directory: \(outputPath)")
     let outputURL = URL(filePath: outputPath)
     try fm.createDirectory(at: outputURL, withIntermediateDirectories: true)
 

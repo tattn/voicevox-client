@@ -24,6 +24,8 @@ voicevox-client setup
 
 Resources are saved to `~/.voicevox-client/resources/`.
 
+Set `VOICEVOX_CLIENT_HOME` to change the base directory (default: `~/.voicevox-client`).
+
 ### Usage
 
 ```bash
@@ -39,9 +41,51 @@ voicevox-client --text "こんにちは" --speed 1.2 --pitch 0.8
 # AquesTalk-like kana notation (control accent directly)
 voicevox-client --text "コンニチワ'" --kana
 
-# List available speakers
+# Use a specific voice model by name (loads <resources>/vvms/<name>.vvm)
+voicevox-client --text "こんにちは" --model-name 1
+
+# List speakers in the current model
 voicevox-client speakers
+
+# List all speakers from all downloaded models
+voicevox-client speakers --all
 ```
+
+<details>
+<summary>AquesTalk-like kana notation reference</summary>
+
+The `--kana` flag accepts katakana with special symbols to control accent and intonation:
+
+| Symbol | Description | Example |
+|---|---|---|
+| `'` | Accent position (required once per phrase) | `コンニチワ'` |
+| `/` | Accent phrase separator | `コンニチワ'/ゲンキデ'スカ` |
+| `、` | Accent phrase separator with pause | `コンニチワ'、ゲンキデ'スカ` |
+| `_` | Unvoiced mora (place before kana) | `ス_キデ'ス` |
+| `？` | Interrogative intonation (place at end) | `ゲンキデ'スカ？` |
+
+</details>
+
+<details>
+<summary>Audio query (JSON) workflow</summary>
+
+You can export an audio query as JSON, edit it, and then synthesize from it:
+
+```bash
+# Generate audio query JSON
+voicevox-client query --text "こんにちは" --style-id 0 > query.json
+
+# Save to a file directly
+voicevox-client query --text "こんにちは" --style-id 0 --output query.json
+
+# Synthesize from a JSON file
+voicevox-client synthesize-from-query --input query.json --style-id 0 --output output.wav
+
+# Pipe directly
+voicevox-client query --text "こんにちは" | voicevox-client synthesize-from-query --input - --output output.wav
+```
+
+</details>
 
 ## Swift Library
 

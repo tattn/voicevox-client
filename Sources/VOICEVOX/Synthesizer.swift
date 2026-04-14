@@ -311,4 +311,17 @@ public actor Synthesizer {
   ) async throws(VOICEVOXError) -> AudioQuery {
     try synthesizer.replaceMoraData(audioQuery: audioQuery, styleId: styleId)
   }
+
+  /// Reads speaker metadata from a .vvm file without loading it into a synthesizer.
+  ///
+  /// This is lightweight — it opens the file, reads metadata, and closes it immediately.
+  /// No model weights are loaded into memory.
+  ///
+  /// - Parameter url: The file URL to the voice model (.vvm file).
+  /// - Returns: An array of `Speaker` objects contained in the model file.
+  /// - Throws: `VOICEVOXError` if the file cannot be opened or metadata cannot be read.
+  public static func speakers(from url: URL) throws(VOICEVOXError) -> [Speaker] {
+    let file = try VoiceModelFile(url: url)
+    return try file.getSpeakers()
+  }
 }

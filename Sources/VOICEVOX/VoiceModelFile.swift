@@ -60,7 +60,28 @@ final class VoiceModelFile {
     self.modelID = VoiceModelID(voiceModelFile: voiceModelFile)
   }
 
+  /// Returns speaker metadata from this voice model file without loading it into a synthesizer.
+  func getSpeakers() throws(VOICEVOXError) -> [Speaker] {
+    guard let jsonCString = voicevox_voice_model_file_create_metas_json(pointer) else {
+      throw .voiceModelLoadFailed(
+        path: url.absoluteURL.path(),
+        reason: "Failed to retrieve speaker metadata from voice model file"
+      )
+    }
+    defer { voicevox_json_free(jsonCString) }
+
+    do {
+      return try JSONDecoder().decode([Speaker].self, from: Data(bytes: jsonCString, count: strlen(jsonCString)))
+    } catch {
+      throw .voiceModelLoadFailed(
+        path: url.absoluteURL.path(),
+        reason: "Failed to parse speaker metadata: \(error.localizedDescription)"
+      )
+    }
+  }
+
   deinit {
     voicevox_voice_model_file_delete(pointer)
   }
 }
+
