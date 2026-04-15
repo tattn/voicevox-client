@@ -10,6 +10,14 @@ struct VoicevoxClientCLI: AsyncParsableCommand {
     subcommands: [Synthesize.self, Query.self, SynthesizeFromQuery.self, Speakers.self, Setup.self],
     defaultSubcommand: Synthesize.self
   )
+
+  static func main() async {
+    // Suppress VOICEVOX Core's Rust log output unless the user explicitly sets RUST_LOG
+    if ProcessInfo.processInfo.environment["RUST_LOG"] == nil {
+      setenv("RUST_LOG", "error", 0)
+    }
+    await self.main(nil)
+  }
 }
 
 enum DefaultPaths {
