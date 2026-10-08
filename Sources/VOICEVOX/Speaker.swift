@@ -37,6 +37,31 @@ public struct Speaker: Codable, Equatable, Hashable, Sendable {
     public let order: Int
 
     /// The type of this style (e.g., "talk").
+    ///
+    /// Use ``styleType`` for a typed representation.
     public let type: String
+
+    /// The typed representation of ``type``, or `nil` if the type is unknown to this library.
+    public var styleType: StyleType? {
+      StyleType(rawValue: type)
+    }
+  }
+
+  /// The type of a voice style, which determines the available operations.
+  public enum StyleType: String, Codable, Sendable, CaseIterable {
+    /// Supports creating audio queries and synthesizing speech.
+    case talk
+
+    /// Supports creating frame audio queries for singing synthesis.
+    case singingTeacher = "singing_teacher"
+
+    /// Supports singing synthesis from frame audio queries.
+    case frameDecode = "frame_decode"
+
+    /// Supports both creating frame audio queries and singing synthesis.
+    case sing
+
+    /// Supports everything ``talk`` does, and streaming speech synthesis.
+    case streamingTalk = "streaming_talk"
   }
 }

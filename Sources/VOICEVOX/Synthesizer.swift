@@ -45,28 +45,25 @@ public actor Synthesizer {
   /// Multiple models can be loaded simultaneously to provide access to different
   /// voices and speaking styles.
   ///
-  /// - Parameter url: The file URL to the voice model (.vvm file).
+  /// - Parameters:
+  ///   - url: The file URL to the voice model (.vvm file).
+  ///   - onExisting: The behavior when a voice model with the same ID is already loaded.
+  ///     Defaults to ``ExistingVoiceModelBehavior/skip``.
   ///
   /// - Returns: The unique identifier of the loaded voice model.
   ///
   /// - Throws: `VOICEVOXError.voiceModelLoadFailed` if the model cannot be loaded.
   ///
-  /// - Note: If the same model is already loaded, this operation returns the existing
+  /// - Note: By default, if the same model is already loaded, this operation returns the existing
   ///   model ID and will not throw an error.
   @discardableResult
-  public func loadVoiceModel(from url: URL) async throws(VOICEVOXError) -> VoiceModelID {
-    // Open and load the voice model file
+  public func loadVoiceModel(
+    from url: URL,
+    onExisting: ExistingVoiceModelBehavior = .skip
+  ) async throws(VOICEVOXError) -> VoiceModelID {
     let voiceModelFile = try VoiceModelFile(url: url)
-    let modelID = voiceModelFile.modelID
-
-    // Skip if already loaded
-    guard !synthesizer.isVoiceModelLoaded(modelID: modelID) else {
-      return modelID
-    }
-
-    // Load the model into the synthesizer
-    try synthesizer.loadVoiceModel(from: voiceModelFile)
-    return modelID
+    try synthesizer.loadVoiceModel(from: voiceModelFile, onExisting: onExisting)
+    return voiceModelFile.modelID
   }
 
   /// Unloads a previously loaded voice model.
@@ -323,5 +320,89 @@ public actor Synthesizer {
   public static func speakers(from url: URL) throws(VOICEVOXError) -> [Speaker] {
     let file = try VoiceModelFile(url: url)
     return try file.getSpeakers()
+  }
+}
+
+// MARK: - Singing Synthesis
+
+extension Synthesizer {
+  /// Creates a frame audio query for singing synthesis from a score.
+  ///
+  /// See [the VOICEVOX Core user guide](https://github.com/VOICEVOX/voicevox_core/blob/main/docs/guide/user/song.md)
+  /// for details of singing synthesis.
+  ///
+  /// - Parameters:
+  ///   - score: The score to sing.
+  ///   - styleId: The style ID of a ``Speaker/StyleType/singingTeacher`` or ``Speaker/StyleType/sing`` style.
+  ///
+  /// - Returns: A `FrameAudioQuery` that can be passed to ``synthesize(frameAudioQuery:styleId:)``.
+  ///
+  /// - Throws: `VOICEVOXError.invalidQuery` if the score is invalid,
+  ///   or `VOICEVOXError.synthesisFailed` if the creation fails.
+  public func createSingFrameAudioQuery(
+    score: Score,
+    styleId: UInt32
+  ) async throws(VOICEVOXError) -> FrameAudioQuery {
+    try synthesizer.createSingFrameAudioQuery(score: score, styleId: styleId)
+  }
+
+  /// Creates the fundamental frequency of each frame from a score and a frame audio query.
+  ///
+  /// Use this method to regenerate ``FrameAudioQuery/f0`` after editing the phonemes of a frame audio query.
+  ///
+  /// - Parameters:
+  ///   - score: The score.
+  ///   - frameAudioQuery: The frame audio query created from the score.
+  ///   - styleId: The style ID of a ``Speaker/StyleType/singingTeacher`` or ``Speaker/StyleType/sing`` style.
+  ///
+  /// - Returns: The fundamental frequency of each frame.
+  ///
+  /// - Throws: `VOICEVOXError.invalidQuery` or `VOICEVOXError.incompatibleQueries` if the inputs are invalid,
+  ///   or `VOICEVOXError.synthesisFailed` if the creation fails.
+  public func createSingFrameF0(
+    score: Score,
+    frameAudioQuery: FrameAudioQuery,
+    styleId: UInt32
+  ) async throws(VOICEVOXError) -> [Float] {
+    try synthesizer.createSingFrameF0(score: score, frameAudioQuery: frameAudioQuery, styleId: styleId)
+  }
+
+  /// Creates the volume of each frame from a score and a frame audio query.
+  ///
+  /// Use this method to regenerate ``FrameAudioQuery/volume`` after editing the phonemes or the fundamental
+  /// frequency of a frame audio query.
+  ///
+  /// - Parameters:
+  ///   - score: The score.
+  ///   - frameAudioQuery: The frame audio query created from the score.
+  ///   - styleId: The style ID of a ``Speaker/StyleType/singingTeacher`` or ``Speaker/StyleType/sing`` style.
+  ///
+  /// - Returns: The volume of each frame.
+  ///
+  /// - Throws: `VOICEVOXError.invalidQuery` or `VOICEVOXError.incompatibleQueries` if the inputs are invalid,
+  ///   or `VOICEVOXError.synthesisFailed` if the creation fails.
+  public func createSingFrameVolume(
+    score: Score,
+    frameAudioQuery: FrameAudioQuery,
+    styleId: UInt32
+  ) async throws(VOICEVOXError) -> [Float] {
+    try synthesizer.createSingFrameVolume(score: score, frameAudioQuery: frameAudioQuery, styleId: styleId)
+  }
+
+  /// Synthesizes singing voice from a frame audio query.
+  ///
+  /// - Parameters:
+  ///   - frameAudioQuery: The frame audio query.
+  ///   - styleId: The style ID of a ``Speaker/StyleType/frameDecode`` or ``Speaker/StyleType/sing`` style.
+  ///
+  /// - Returns: Audio data in WAV format ready for playback or further processing.
+  ///
+  /// - Throws: `VOICEVOXError.invalidQuery` if the frame audio query is invalid,
+  ///   or `VOICEVOXError.synthesisFailed` if the synthesis fails.
+  public func synthesize(
+    frameAudioQuery: FrameAudioQuery,
+    styleId: UInt32
+  ) async throws(VOICEVOXError) -> Data {
+    try synthesizer.synthesize(frameAudioQuery: frameAudioQuery, styleId: styleId)
   }
 }

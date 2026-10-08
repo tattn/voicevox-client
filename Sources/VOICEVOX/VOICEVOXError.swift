@@ -1,4 +1,5 @@
 import Foundation
+import voicevox_common
 
 /// Errors that can occur during VOICEVOX operations.
 ///
@@ -80,6 +81,41 @@ public enum VOICEVOXError: LocalizedError, Sendable {
   /// - Parameter details: Details about the internal error.
   case internalError(details: String)
 
+  /// A query or one of its components is invalid.
+  ///
+  /// This error occurs when validation fails, for example when a mora has a consonant
+  /// without a consonant length, or when a score does not start with a rest.
+  ///
+  /// - Parameter kind: The kind of the invalid value.
+  /// - Parameter reason: Optional specific reason for the failure.
+  case invalidQuery(kind: QueryKind, reason: String? = nil)
+
+  /// A score and a frame audio query cannot be used together.
+  ///
+  /// This error occurs when the phonemes represented by the score's notes do not match
+  /// the phonemes of the frame audio query.
+  ///
+  /// - Parameter reason: Optional specific reason for the failure.
+  case incompatibleQueries(reason: String? = nil)
+
+  /// The kind of a value that can be validated by VOICEVOX Core.
+  public enum QueryKind: String, Sendable {
+    /// ``AudioQuery``
+    case audioQuery
+    /// ``AudioQuery/AccentPhrase``
+    case accentPhrase
+    /// ``AudioQuery/Mora``
+    case mora
+    /// ``Score``
+    case score
+    /// ``Score/Note``
+    case note
+    /// ``FrameAudioQuery``
+    case frameAudioQuery
+    /// ``FrameAudioQuery/FramePhoneme``
+    case framePhoneme
+  }
+
   // MARK: - LocalizedError Implementation
 
   public var errorDescription: String? {
@@ -149,6 +185,20 @@ public enum VOICEVOXError: LocalizedError, Sendable {
 
     case let .internalError(details):
       return "Internal error: \(details)"
+
+    case let .invalidQuery(kind, reason):
+      var description = "Invalid \(kind.rawValue)"
+      if let reason {
+        description += ": \(reason)"
+      }
+      return description
+
+    case let .incompatibleQueries(reason):
+      var description = "The score and the frame audio query are incompatible"
+      if let reason {
+        description += ": \(reason)"
+      }
+      return description
     }
   }
 
@@ -170,6 +220,10 @@ public enum VOICEVOXError: LocalizedError, Sendable {
       "The user dictionary operation could not be completed"
     case .internalError:
       "An unexpected internal error occurred"
+    case .invalidQuery:
+      "The value does not satisfy the constraints required by VOICEVOX Core"
+    case .incompatibleQueries:
+      "The phonemes of the score do not match the phonemes of the frame audio query"
     }
   }
 
@@ -191,6 +245,17 @@ public enum VOICEVOXError: LocalizedError, Sendable {
       "Check the dictionary file format and permissions, or verify the word data is valid"
     case .internalError:
       "Please report this issue to the developers with the error details"
+    case .invalidQuery:
+      "Check the values of the query, such as phonemes, lengths, accents, keys and lyrics"
+    case .incompatibleQueries:
+      "Create the frame audio query from the same score"
     }
+  }
+}
+
+extension VOICEVOXError {
+  /// Returns the human-readable message of a VOICEVOX Core result code.
+  static func message(for resultCode: Int32) -> String {
+    "\(String(cString: voicevox_error_result_to_message(resultCode))) (error code: \(resultCode))"
   }
 }

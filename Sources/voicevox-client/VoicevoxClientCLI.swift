@@ -24,16 +24,19 @@ enum DefaultPaths {
   static var home: String {
     ProcessInfo.processInfo.environment["VOICEVOX_CLIENT_HOME"]
       ?? FileManager.default.homeDirectoryForCurrentUser
-        .appending(path: ".voicevox-client").path()
+        .appending(path: ".voicevox-client").fileSystemPath
   }
 
   static var resourcesDir: String {
-    URL(filePath: home).appending(path: "resources").path()
+    URL(filePath: home).appending(path: "resources").fileSystemPath
   }
 }
 
 struct CommonOptions: ParsableArguments {
-  @Option(name: .long, help: "Path to the OpenJTalk dictionary directory (default: ~/.voicevox-client/resources/open_jtalk_dic_utf_8)")
+  @Option(
+    name: .long,
+    help: "Path to the OpenJTalk dictionary directory (default: ~/.voicevox-client/resources/open_jtalk_dic_utf_8)"
+  )
   var dictPath: String?
 
   @Option(name: .long, help: "Path to the OnnxRuntime dylib directory (default: ~/.voicevox-client/resources)")
@@ -242,7 +245,7 @@ struct Speakers: AsyncParsableCommand {
     let fm = FileManager.default
 
     guard let entries = try? fm.contentsOfDirectory(at: vvmsDir, includingPropertiesForKeys: nil) else {
-      print("No vvms directory found at \(vvmsDir.path())")
+      print("No vvms directory found at \(vvmsDir.fileSystemPath)")
       return
     }
 
@@ -251,7 +254,7 @@ struct Speakers: AsyncParsableCommand {
       .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
 
     if vvmFiles.isEmpty {
-      print("No .vvm files found in \(vvmsDir.path())")
+      print("No .vvm files found in \(vvmsDir.fileSystemPath)")
       return
     }
 
@@ -259,7 +262,7 @@ struct Speakers: AsyncParsableCommand {
       let name = vvmFile.deletingPathExtension().lastPathComponent
       do {
         let speakers = try Synthesizer.speakers(from: vvmFile)
-        print("[\(name)] \(vvmFile.path())")
+        print("[\(name)] \(vvmFile.fileSystemPath)")
         printSpeakers(speakers)
         print("")
       } catch {

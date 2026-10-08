@@ -44,13 +44,20 @@ voicevox_release_arch() {
     esac
 }
 
+VOICEVOX_CORE_VERSION="0.17.0"
+ONNXRUNTIME_VERSION="1.17.3"
+MODELS_VERSION="0.16.4"
+
 # Check if resources already exist
 VVMS_DIR="./Example/VOICEVOXExample/lib/vvms"
 DICT_DIR="./Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8"
+SONG_VVM="${VVMS_DIR}/s0.vvm"
 CORE_LIB="./Example/VOICEVOXExample/lib/libvoicevox_core.dylib"
-ONNX_LIB="./Example/VOICEVOXExample/lib/libvoicevox_onnxruntime.1.17.3.dylib"
+CORE_VERSION_FILE="./Example/VOICEVOXExample/lib/VOICEVOX_CORE_VERSION"
+ONNX_LIB="./Example/VOICEVOXExample/lib/libvoicevox_onnxruntime.${ONNXRUNTIME_VERSION}.dylib"
 
-if [ -d "$VVMS_DIR" ] && [ -d "$DICT_DIR" ] && [ -f "$CORE_LIB" ] && [ -f "$ONNX_LIB" ]; then
+if [ -d "$VVMS_DIR" ] && [ -d "$DICT_DIR" ] && [ -f "$SONG_VVM" ] && [ -f "$CORE_LIB" ] && [ -f "$ONNX_LIB" ] \
+    && [ "$(cat "$CORE_VERSION_FILE" 2>/dev/null)" = "$VOICEVOX_CORE_VERSION" ]; then
     echo "VOICEVOX resources already exist, skipping download..."
     # Check if directories are not empty
     if [ "$(ls -A "$VVMS_DIR" 2>/dev/null)" ] && [ "$(ls -A "$DICT_DIR" 2>/dev/null)" ]; then
@@ -63,48 +70,55 @@ fi
 
 echo "Downloading VOICEVOX resources..."
 ARCH="$(voicevox_release_arch)"
-curl_github_release "https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.3/download-osx-${ARCH}" download
+curl_github_release "https://github.com/VOICEVOX/voicevox_core/releases/download/${VOICEVOX_CORE_VERSION}/download-osx-${ARCH}" download
 chmod +x download
 xattr -d com.apple.quarantine download 2>/dev/null || true
 
 echo "Extracting VOICEVOX resources..."
 run_download() {
     local only="$1"
+    shift
+    local download_args=(--output voicevox_resources --only "$only" "$@")
     if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
-        printf "y\n" | PAGER=/bin/cat ./download --output voicevox_resources --only "$only"
+        printf "y\n" | PAGER=/bin/cat ./download "${download_args[@]}"
         return
     fi
 
     # Avoid pager errors by running under a pseudo-TTY locally.
     if command -v script >/dev/null 2>&1; then
-        script -q /dev/null bash -lc "printf 'y\n' | PAGER=/bin/cat ./download --output voicevox_resources --only $only"
+        script -q /dev/null bash -lc "printf 'y\n' | PAGER=/bin/cat ./download ${download_args[*]}"
     else
-        printf "y\n" | PAGER=/bin/cat ./download --output voicevox_resources --only "$only"
+        printf "y\n" | PAGER=/bin/cat ./download "${download_args[@]}"
     fi
 }
 
-run_download models
+run_download models --models-version "$MODELS_VERSION"
 run_download dict
-run_download onnxruntime
+run_download onnxruntime --onnxruntime-version "$ONNXRUNTIME_VERSION"
 
 echo "Downloading VOICEVOX Core library..."
-curl_github_release "https://github.com/VOICEVOX/voicevox_core/releases/download/0.16.3/voicevox_core-osx-${ARCH}-0.16.3.zip" voicevox_core.zip
+CORE_DIR="voicevox_core-osx-${ARCH}-${VOICEVOX_CORE_VERSION}"
+curl_github_release "https://github.com/VOICEVOX/voicevox_core/releases/download/${VOICEVOX_CORE_VERSION}/${CORE_DIR}.zip" voicevox_core.zip
 unzip -q voicevox_core.zip
 
 echo "Setting up VOICEVOX resources..."
 mkdir -p ./Example/VOICEVOXExample/lib
 cp -r voicevox_resources/models/vvms ./Example/VOICEVOXExample/lib
-cp -r voicevox_resources/dict/open_jtalk_dic_utf_8-1.11 ./Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
-cp "voicevox_core-osx-${ARCH}-0.16.3/lib/libvoicevox_core.dylib" ./Example/VOICEVOXExample/lib
-cp voicevox_resources/onnxruntime/lib/libvoicevox_onnxruntime.1.17.3.dylib ./Example/VOICEVOXExample/lib
+cp -r voicevox_resources/dict/open_jtalk_dic_utf_8-1.11/ ./Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
+cp "${CORE_DIR}/lib/libvoicevox_core.dylib" ./Example/VOICEVOXExample/lib
+cp "voicevox_resources/onnxruntime/lib/libvoicevox_onnxruntime.${ONNXRUNTIME_VERSION}.dylib" ./Example/VOICEVOXExample/lib
+printf '%s' "$VOICEVOX_CORE_VERSION" > "$CORE_VERSION_FILE"
 
 echo "Updating dylib install names..."
 install_name_tool -id @rpath/libvoicevox_core.dylib ./Example/VOICEVOXExample/lib/libvoicevox_core.dylib
+# Changing the install name invalidates the upstream Developer ID signature, and macOS kills
+# processes that load a dylib with an invalid signature.
+codesign --force --sign - ./Example/VOICEVOXExample/lib/libvoicevox_core.dylib
 
 # Clean up downloaded files
 rm -f download
 rm -f voicevox_core.zip
 rm -rf voicevox_resources
-rm -rf "voicevox_core-osx-${ARCH}-0.16.3"
+rm -rf "$CORE_DIR"
 
 echo "VOICEVOX resources setup complete!"

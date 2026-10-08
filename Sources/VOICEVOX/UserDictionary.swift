@@ -74,7 +74,7 @@ public final class UserDictionary: @unchecked Sendable {
     public var accentType: Int
     /// Word type
     public var wordType: WordType
-    /// Priority (integer >= 1, default 5)
+    /// Priority (0...10, default 5)
     public var priority: UInt32
 
     /// Creates a new word
@@ -84,7 +84,7 @@ public final class UserDictionary: @unchecked Sendable {
     ///   - pronunciation: Pronunciation (katakana)
     ///   - accentType: Accent type (>= 1)
     ///   - wordType: Word type (default: proper noun)
-    ///   - priority: Priority (>= 1, default 5)
+    ///   - priority: Priority (0...10, default 5)
     public init(
       id: UUID = UUID(),
       surface: String,
@@ -108,7 +108,8 @@ public final class UserDictionary: @unchecked Sendable {
         pronunciation: pronunciation.withCString { strdup($0) },
         accent_type: UInt(accentType),
         word_type: Int32(wordType.cValue),
-        priority: priority
+        // Saturating keeps out-of-range values out of range, so VOICEVOX Core still rejects them.
+        priority: UInt8(clamping: priority)
       )
     }
   }
@@ -245,7 +246,7 @@ public final class UserDictionary: @unchecked Sendable {
   /// - Throws: ``VOICEVOXError/userDictError(operation:details:)`` if the operation fails
   public func load(from url: URL) throws(VOICEVOXError) {
     try performLocked {
-      let path = url.absoluteURL.path()
+      let path = url.fileSystemPath
       let resultCode = voicevox_user_dict_load(pointer, path)
 
       guard resultCode == 0 else {
@@ -262,7 +263,7 @@ public final class UserDictionary: @unchecked Sendable {
   /// - Throws: ``VOICEVOXError/userDictError(operation:details:)`` if the operation fails
   public func save(to url: URL) throws(VOICEVOXError) {
     try performLocked {
-      let path = url.absoluteURL.path()
+      let path = url.fileSystemPath
       let resultCode = voicevox_user_dict_save(pointer, path)
 
       guard resultCode == 0 else {

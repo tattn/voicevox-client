@@ -54,7 +54,7 @@ jobs:
             Example/VOICEVOXExample/lib/vvms
             Example/VOICEVOXExample/lib/open_jtalk_dic_utf_8
             Example/VOICEVOXExample/lib/*.dylib
-          key: voicevox-resources-v0.16.3-${{ matrix.arch }}
+          key: voicevox-resources-v0.17.0-${{ matrix.arch }}
 
       - name: Setup VOICEVOX resources
         if: steps.cache-voicevox.outputs.cache-hit != 'true'

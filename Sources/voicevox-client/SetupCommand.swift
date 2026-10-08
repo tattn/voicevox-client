@@ -1,16 +1,22 @@
 import ArgumentParser
 import Foundation
+import VOICEVOX
 
 struct Setup: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Download and set up VOICEVOX resources"
   )
 
-  @Option(name: .shortAndLong, help: "Output directory for resources (default: $VOICEVOX_CLIENT_HOME/resources or ~/.voicevox-client/resources)")
+  @Option(
+    name: .shortAndLong,
+    help: "Output directory for resources (default: $VOICEVOX_CLIENT_HOME/resources or ~/.voicevox-client/resources)"
+  )
   var output: String?
 
   @Option(name: .long, help: "VOICEVOX Core version")
-  var version: String = "0.16.3"
+  var version: String = "0.17.0"
+
+  private static let onnxruntimeVersion = "1.17.3"
 
   func run() async throws {
     let fm = FileManager.default
@@ -19,38 +25,16 @@ struct Setup: AsyncParsableCommand {
     let outputURL = URL(filePath: outputPath)
     try fm.createDirectory(at: outputURL, withIntermediateDirectories: true)
 
-    let tempDir = fm.temporaryDirectory.appending(path: "voicevox-setup-\(ProcessInfo.processInfo.globallyUniqueString)")
+    let tempDir = fm.temporaryDirectory
+      .appending(path: "voicevox-setup-\(ProcessInfo.processInfo.globallyUniqueString)")
     try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
     defer { try? fm.removeItem(at: tempDir) }
 
     // 1. Download and run the VOICEVOX downloader for models, dict, onnxruntime
-    let downloaderURL = tempDir.appending(path: "download")
     let resourcesDir = tempDir.appending(path: "resources")
+    try await downloadComponents(to: resourcesDir, workingDirectory: tempDir)
 
-    print("Downloading VOICEVOX downloader...")
-    let arch = currentArch()
-    try await download(
-      from: "https://github.com/VOICEVOX/voicevox_core/releases/download/\(version)/download-osx-\(arch)",
-      to: downloaderURL
-    )
-    try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: downloaderURL.path())
-    removeQuarantine(downloaderURL)
-
-    for component in ["models", "dict", "onnxruntime"] {
-      print("Downloading \(component)...")
-      try runDownloader(downloaderURL, output: resourcesDir, only: component)
-    }
-
-    // 2. Download VOICEVOX Core library
-    let coreZipURL = tempDir.appending(path: "voicevox_core.zip")
-    print("Downloading VOICEVOX Core library...")
-    try await download(
-      from: "https://github.com/VOICEVOX/voicevox_core/releases/download/\(version)/voicevox_core-osx-\(arch)-\(version).zip",
-      to: coreZipURL
-    )
-    try unzip(coreZipURL, to: tempDir)
-
-    // 3. Copy resources to output directory
+    // 2. Copy resources to output directory
     print("Setting up resources...")
 
     let vvmsSource = resourcesDir.appending(path: "models/vvms")
@@ -61,24 +45,62 @@ struct Setup: AsyncParsableCommand {
     let dictDest = outputURL.appending(path: "open_jtalk_dic_utf_8")
     try replaceItem(at: dictDest, with: dictSource)
 
-    let coreExtracted = tempDir.appending(path: "voicevox_core-osx-\(arch)-\(version)")
-    let coreDylib = coreExtracted.appending(path: "lib/libvoicevox_core.dylib")
-    let coreDest = outputURL.appending(path: "libvoicevox_core.dylib")
-    try replaceItem(at: coreDest, with: coreDylib)
-
-    let onnxSource = resourcesDir.appending(path: "onnxruntime/lib/libvoicevox_onnxruntime.1.17.3.dylib")
-    let onnxDest = outputURL.appending(path: "libvoicevox_onnxruntime.1.17.3.dylib")
+    let onnxFileName = "libvoicevox_onnxruntime.\(Self.onnxruntimeVersion).dylib"
+    let onnxSource = resourcesDir.appending(path: "onnxruntime/lib/\(onnxFileName)")
+    let onnxDest = outputURL.appending(path: onnxFileName)
     try replaceItem(at: onnxDest, with: onnxSource)
 
-    // 4. Fix dylib install names
-    try runProcess("/usr/bin/install_name_tool", arguments: [
-      "-id", "@rpath/libvoicevox_core.dylib", coreDest.path(),
-    ])
+    // 3. Download and install VOICEVOX Core library
+    try await installCoreLibrary(to: outputURL, workingDirectory: tempDir)
 
     print("Setup complete! Resources saved to: \(outputPath)")
     print("")
     print("Usage:")
     print("  voicevox-client --text \"こんにちは\"")
+  }
+
+  private func downloadComponents(to resourcesDir: URL, workingDirectory: URL) async throws {
+    let downloaderURL = workingDirectory.appending(path: "download")
+
+    print("Downloading VOICEVOX downloader...")
+    try await download(
+      from: "https://github.com/VOICEVOX/voicevox_core/releases/download/\(version)/download-osx-\(currentArch())",
+      to: downloaderURL
+    )
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: downloaderURL.fileSystemPath)
+    removeQuarantine(downloaderURL)
+
+    let componentArguments: [(component: String, arguments: [String])] = [
+      ("models", []),
+      ("dict", []),
+      ("onnxruntime", ["--onnxruntime-version", Self.onnxruntimeVersion]),
+    ]
+    for (component, arguments) in componentArguments {
+      print("Downloading \(component)...")
+      try runDownloader(downloaderURL, output: resourcesDir, only: component, arguments: arguments)
+    }
+  }
+
+  private func installCoreLibrary(to outputURL: URL, workingDirectory: URL) async throws {
+    let archiveName = "voicevox_core-osx-\(currentArch())-\(version)"
+    let coreZipURL = workingDirectory.appending(path: "voicevox_core.zip")
+    print("Downloading VOICEVOX Core library...")
+    try await download(
+      from: "https://github.com/VOICEVOX/voicevox_core/releases/download/\(version)/\(archiveName).zip",
+      to: coreZipURL
+    )
+    try unzip(coreZipURL, to: workingDirectory)
+
+    let coreDylib = workingDirectory.appending(path: "\(archiveName)/lib/libvoicevox_core.dylib")
+    let coreDest = outputURL.appending(path: "libvoicevox_core.dylib")
+    try replaceItem(at: coreDest, with: coreDylib)
+
+    try runProcess("/usr/bin/install_name_tool", arguments: [
+      "-id", "@rpath/libvoicevox_core.dylib", coreDest.fileSystemPath,
+    ])
+    // Changing the install name invalidates the upstream Developer ID signature, and macOS kills
+    // processes that load a dylib with an invalid signature.
+    try runProcess("/usr/bin/codesign", arguments: ["--force", "--sign", "-", coreDest.fileSystemPath])
   }
 
   // MARK: - Helpers
@@ -100,7 +122,7 @@ struct Setup: AsyncParsableCommand {
       throw SetupError.downloadFailed(urlString)
     }
     let fm = FileManager.default
-    if fm.fileExists(atPath: destination.path()) {
+    if fm.fileExists(atPath: destination.fileSystemPath) {
       try fm.removeItem(at: destination)
     }
     try fm.moveItem(at: tempURL, to: destination)
@@ -109,17 +131,17 @@ struct Setup: AsyncParsableCommand {
   private func removeQuarantine(_ url: URL) {
     let process = Process()
     process.executableURL = URL(filePath: "/usr/bin/xattr")
-    process.arguments = ["-d", "com.apple.quarantine", url.path()]
+    process.arguments = ["-d", "com.apple.quarantine", url.fileSystemPath]
     process.standardOutput = FileHandle.nullDevice
     process.standardError = FileHandle.nullDevice
     try? process.run()
     process.waitUntilExit()
   }
 
-  private func runDownloader(_ downloaderURL: URL, output: URL, only: String) throws {
+  private func runDownloader(_ downloaderURL: URL, output: URL, only: String, arguments: [String]) throws {
     let process = Process()
     process.executableURL = downloaderURL
-    process.arguments = ["--output", output.path(), "--only", only]
+    process.arguments = ["--output", output.fileSystemPath, "--only", only] + arguments
     process.environment = (ProcessInfo.processInfo.environment).merging(["PAGER": "/bin/cat"]) { _, new in new }
 
     let inputPipe = Pipe()
@@ -136,7 +158,7 @@ struct Setup: AsyncParsableCommand {
   }
 
   private func unzip(_ zipURL: URL, to directory: URL) throws {
-    try runProcess("/usr/bin/unzip", arguments: ["-q", zipURL.path(), "-d", directory.path()])
+    try runProcess("/usr/bin/unzip", arguments: ["-q", zipURL.fileSystemPath, "-d", directory.fileSystemPath])
   }
 
   private func runProcess(_ path: String, arguments: [String]) throws {
@@ -152,7 +174,7 @@ struct Setup: AsyncParsableCommand {
 
   private func replaceItem(at destination: URL, with source: URL) throws {
     let fm = FileManager.default
-    if fm.fileExists(atPath: destination.path()) {
+    if fm.fileExists(atPath: destination.fileSystemPath) {
       try fm.removeItem(at: destination)
     }
     try fm.copyItem(at: source, to: destination)
@@ -167,13 +189,13 @@ enum SetupError: LocalizedError {
 
   var errorDescription: String? {
     switch self {
-    case .invalidURL(let url):
+    case let .invalidURL(url):
       "Invalid URL: \(url)"
-    case .downloadFailed(let url):
+    case let .downloadFailed(url):
       "Failed to download: \(url)"
-    case .downloaderFailed(let component, let code):
+    case let .downloaderFailed(component, code):
       "VOICEVOX downloader failed for '\(component)' (exit code: \(code))"
-    case .processFailed(let path, let code):
+    case let .processFailed(path, code):
       "\(path) failed (exit code: \(code))"
     }
   }

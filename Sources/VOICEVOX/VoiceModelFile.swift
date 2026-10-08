@@ -38,6 +38,32 @@ public struct VoiceModelID: Equatable, Hashable, Sendable {
   }
 }
 
+/// The behavior when a voice model with the same ``VoiceModelID`` is already loaded.
+public enum ExistingVoiceModelBehavior: Sendable, CaseIterable {
+  /// Throws ``VOICEVOXError/voiceModelLoadFailed(path:reason:)``.
+  case error
+
+  /// Reloads the voice model.
+  ///
+  /// VOICEVOX Core keeps a large amount of CPU/GPU memory occupied after synthesizing long text at once.
+  /// Reloading the voice model releases that memory.
+  case reload
+
+  /// Does nothing and keeps the loaded voice model.
+  case skip
+
+  var cValue: Int32 {
+    switch self {
+    case .error:
+      Int32(VOICEVOX_ON_EXISTING_VOICE_MODEL_ID_ERROR.rawValue)
+    case .reload:
+      Int32(VOICEVOX_ON_EXISTING_VOICE_MODEL_ID_RELOAD.rawValue)
+    case .skip:
+      Int32(VOICEVOX_ON_EXISTING_VOICE_MODEL_ID_SKIP.rawValue)
+    }
+  }
+}
+
 /// Wrapper for VoiceModelFile resource management.
 final class VoiceModelFile {
   let pointer: OpaquePointer
@@ -46,11 +72,11 @@ final class VoiceModelFile {
 
   init(url: URL) throws(VOICEVOXError) {
     var voiceModelFile: OpaquePointer?
-    let openResultCode = voicevox_voice_model_file_open(url.absoluteURL.path(), &voiceModelFile)
+    let openResultCode = voicevox_voice_model_file_open(url.fileSystemPath, &voiceModelFile)
 
     guard openResultCode == 0, let voiceModelFile else {
       throw .voiceModelLoadFailed(
-        path: url.absoluteURL.path(),
+        path: url.fileSystemPath,
         reason: "Failed to open voice model file (error code: \(openResultCode))"
       )
     }
@@ -64,7 +90,7 @@ final class VoiceModelFile {
   func getSpeakers() throws(VOICEVOXError) -> [Speaker] {
     guard let jsonCString = voicevox_voice_model_file_create_metas_json(pointer) else {
       throw .voiceModelLoadFailed(
-        path: url.absoluteURL.path(),
+        path: url.fileSystemPath,
         reason: "Failed to retrieve speaker metadata from voice model file"
       )
     }
@@ -74,7 +100,7 @@ final class VoiceModelFile {
       return try JSONDecoder().decode([Speaker].self, from: Data(bytes: jsonCString, count: strlen(jsonCString)))
     } catch {
       throw .voiceModelLoadFailed(
-        path: url.absoluteURL.path(),
+        path: url.fileSystemPath,
         reason: "Failed to parse speaker metadata: \(error.localizedDescription)"
       )
     }
@@ -84,4 +110,3 @@ final class VoiceModelFile {
     voicevox_voice_model_file_delete(pointer)
   }
 }
-

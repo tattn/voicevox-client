@@ -37,6 +37,27 @@ struct VOICEVOXCoreTests {
   }
 
   @Test
+  func testLoadVoiceModelOnExisting() async throws {
+    try TestResources.verifyResourcesExist()
+
+    let synthesizer = try await Synthesizer(configuration: TestResources.createTestConfiguration())
+    let modelURL = TestResources.primaryVoiceModelURL
+    let modelID = try await synthesizer.loadVoiceModel(from: modelURL)
+
+    #expect(try await synthesizer.loadVoiceModel(from: modelURL, onExisting: .skip) == modelID)
+    #expect(try await synthesizer.loadVoiceModel(from: modelURL, onExisting: .reload) == modelID)
+    await #expect {
+      try await synthesizer.loadVoiceModel(from: modelURL, onExisting: .error)
+    } throws: { error in
+      guard case .voiceModelLoadFailed = error as? VOICEVOXError else { return false }
+      return true
+    }
+
+    let audioData = try await synthesizer.synthesize(text: "テスト", styleId: 0)
+    #expect(audioData[0...3] == Data([0x52, 0x49, 0x46, 0x46]))
+  }
+
+  @Test
   func testSynthesizeAudio() async throws {
     try TestResources.verifyResourcesExist()
 
@@ -119,6 +140,7 @@ struct VOICEVOXCoreTests {
       for style in speaker.styles {
         #expect(!style.name.isEmpty, "Style name should not be empty")
         #expect(!style.type.isEmpty, "Style type should not be empty")
+        #expect(style.styleType == .talk)
       }
     }
 

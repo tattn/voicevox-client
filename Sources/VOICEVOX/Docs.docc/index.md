@@ -70,6 +70,51 @@ let audioData = try await synthesizer.synthesize(
 )
 ```
 
+### Validating Audio Queries
+
+`AudioQuery`, `AudioQuery.AccentPhrase` and `AudioQuery.Mora` can be validated before synthesis. Validation throws `VOICEVOXError.invalidQuery` with the reason reported by VOICEVOX Core:
+
+```swift
+var query = try await synthesizer.makeAudioQuery(text: "テスト", styleId: 0)
+query.accentPhrases[0].accent = 10
+try query.validate() // throws VOICEVOXError.invalidQuery(kind: .audioQuery, reason: ...)
+```
+
+### Reloading Voice Models
+
+`loadVoiceModel(from:)` skips a voice model that is already loaded. VOICEVOX Core keeps a large amount of memory occupied after synthesizing long text, and reloading the voice model releases it:
+
+```swift
+try await synthesizer.loadVoiceModel(from: voiceModelURL, onExisting: .reload)
+```
+
+### Singing Synthesis
+
+Singing synthesis creates a `FrameAudioQuery` from a `Score` and synthesizes it. The first note of a score must be a rest. `frameLength` is the length in frames (93.75 frames per second).
+
+```swift
+// Load a voice model containing singing styles (e.g. s0.vvm)
+try await synthesizer.loadVoiceModel(from: songVoiceModelURL)
+
+let score = Score(notes: [
+    .rest(frameLength: 15),
+    Score.Note(key: 60, lyric: "ド", frameLength: 45),
+    Score.Note(key: 62, lyric: "レ", frameLength: 45),
+    Score.Note(key: 64, lyric: "ミ", frameLength: 45),
+    .rest(frameLength: 15),
+])
+
+// Use a `singing_teacher` or `sing` style to create the query
+let frameAudioQuery = try await synthesizer.createSingFrameAudioQuery(score: score, styleId: 6000)
+
+// Use a `frame_decode` or `sing` style to synthesize
+let audioData = try await synthesizer.synthesize(frameAudioQuery: frameAudioQuery, styleId: 3000)
+```
+
+After editing the phonemes of a `FrameAudioQuery`, regenerate the fundamental frequency and the volume with `createSingFrameF0(score:frameAudioQuery:styleId:)` and `createSingFrameVolume(score:frameAudioQuery:styleId:)`. `FrameAudioQuery.ensureCompatible(with:)` checks whether a score and a query can be used together.
+
+The available operations of a style are given by `Speaker.Style.styleType`.
+
 ### Custom Pronunciation with User Dictionary
 
 The `UserDictionary` class allows you to register custom words with specific pronunciations and accent patterns. This is particularly useful for proper nouns, technical terms, or any words that may not be in the standard dictionary.
@@ -180,7 +225,9 @@ let config = VOICEVOXConfiguration(
 - `VoiceModelFile`
 - `VoiceModelID`
 - `Speaker`
-- `SpeakerStyle`
+- `Speaker/Style`
+- `Speaker/StyleType`
+- `ExistingVoiceModelBehavior`
 
 ### Audio Generation
 
@@ -188,6 +235,13 @@ let config = VOICEVOXConfiguration(
 - `AudioQuery/AccentPhrase`
 - `AudioQuery/Mora`
 - `AudioQuery/PauseMora`
+
+### Singing Synthesis
+
+- `Score`
+- `Score/Note`
+- `FrameAudioQuery`
+- `FrameAudioQuery/FramePhoneme`
 
 ### Text Processing
 

@@ -59,15 +59,22 @@ final class CoreSynthesizer {
 
   /// Loads a voice model into the synthesizer.
   ///
-  /// - Parameter file: The voice model file to load.
+  /// - Parameters:
+  ///   - file: The voice model file to load.
+  ///   - onExisting: The behavior when a voice model with the same ID is already loaded.
   /// - Throws: ``VOICEVOXError/voiceModelLoadFailed(path:reason:)`` if loading fails.
-  func loadVoiceModel(from file: VoiceModelFile) throws(VOICEVOXError) {
-    let loadResultCode = voicevox_synthesizer_load_voice_model(pointer, file.pointer)
+  func loadVoiceModel(
+    from file: VoiceModelFile,
+    onExisting: ExistingVoiceModelBehavior = .error
+  ) throws(VOICEVOXError) {
+    var options = voicevox_make_default_load_voice_model_options()
+    options.on_existing = onExisting.cValue
+    let loadResultCode = voicevox_synthesizer_load_voice_model(pointer, file.pointer, options)
 
     guard loadResultCode == 0 else {
       throw .voiceModelLoadFailed(
-        path: file.url.path(),
-        reason: "Failed to load voice model into synthesizer (error code: \(loadResultCode))"
+        path: file.url.fileSystemPath,
+        reason: "Failed to load voice model into synthesizer: \(VOICEVOXError.message(for: loadResultCode))"
       )
     }
   }

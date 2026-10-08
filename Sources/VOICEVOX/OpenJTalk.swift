@@ -6,7 +6,7 @@ final class OpenJTalk {
   let pointer: OpaquePointer
 
   init(dictionaryURL: URL) throws(VOICEVOXError) {
-    let dictionaryPath = dictionaryURL.absoluteURL.path()
+    let dictionaryPath = dictionaryURL.fileSystemPath
 
     // Attempt to create the OpenJTalk resource
     var openJTalk: OpaquePointer?

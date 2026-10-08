@@ -105,7 +105,18 @@ let audioData = try await synthesizer.synthesize(text: "こんにちは", styleI
 
 // AquesTalk-like kana notation for direct accent control
 let audioData = try await synthesizer.synthesize(kana: "コンニチワ'", styleId: 0)
+
+// Singing synthesis (requires a voice model with singing styles, e.g. s0.vvm)
+let score = Score(notes: [
+    .rest(frameLength: 15),
+    Score.Note(key: 60, lyric: "ド", frameLength: 45),
+    .rest(frameLength: 15),
+])
+let frameAudioQuery = try await synthesizer.createSingFrameAudioQuery(score: score, styleId: 6000)
+let singingData = try await synthesizer.synthesize(frameAudioQuery: frameAudioQuery, styleId: 3000)
 ```
+
+This library uses VOICEVOX Core 0.17.0 with ONNX Runtime 1.17.3.
 
 ## Example App Setup
 

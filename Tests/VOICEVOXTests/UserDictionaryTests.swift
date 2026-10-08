@@ -244,6 +244,35 @@ struct UserDictionaryTests {
     }
   }
 
+  @Test(arguments: [UInt32(11), 256, UInt32.max])
+  func testWordPriorityOutOfRange(priority: UInt32) {
+    let dictionary = UserDictionary()
+    var word = UserDictionary.Word(
+      surface: "範囲外",
+      pronunciation: "ハンイガイ",
+      accentType: 1,
+      priority: priority
+    )
+
+    #expect(throws: VOICEVOXError.self) {
+      try dictionary.addWord(&word)
+    }
+  }
+
+  @Test
+  func testWordPriorityRoundTrip() throws {
+    let dictionary = UserDictionary()
+    var word = UserDictionary.Word(
+      surface: "最低優先度",
+      pronunciation: "サイテイユウセンド",
+      accentType: 1,
+      priority: 0
+    )
+    try dictionary.addWord(&word)
+
+    #expect(try dictionary.words().first?.priority == 0)
+  }
+
   @Test
   func testWordIdentifiable() {
     let word1 = UserDictionary.Word(

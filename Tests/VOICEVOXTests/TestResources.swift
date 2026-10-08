@@ -5,12 +5,19 @@ import Testing
 
 /// Shared test resource utilities for VOICEVOX tests.
 enum TestResources {
-  /// The base path to test resources directory.
-  static var basePath: String {
+  /// URL to the test resources directory, which also contains the ONNX Runtime dynamic library.
+  ///
+  /// This is a relative URL based on the bundle URL, like the ones apps derive from `Bundle.resourceURL`.
+  static var libURL: URL {
     guard let resourceURL = Bundle.module.resourceURL else {
       fatalError("Unable to find test resources bundle")
     }
-    return resourceURL.appending(component: "lib").absoluteURL.path()
+    return resourceURL.appending(component: "lib")
+  }
+
+  /// The base path to test resources directory.
+  static var basePath: String {
+    libURL.fileSystemPath
   }
 
   /// The path to the OpenJTalk dictionary directory.
@@ -33,6 +40,11 @@ enum TestResources {
     URL(fileURLWithPath: primaryVoiceModelPath)
   }
 
+  /// URL to the voice model file containing singing styles.
+  static var songVoiceModelURL: URL {
+    URL(fileURLWithPath: "\(basePath)/vvms/s0.vvm")
+  }
+
   /// Returns a URL for a voice model with the specified ID.
   ///
   /// - Parameter id: The voice model ID (e.g., 0, 1, 2, etc.)
@@ -51,7 +63,7 @@ enum TestResources {
   ) -> VOICEVOXConfiguration {
     VOICEVOXConfiguration(
       openJTalkDictionaryURL: openJTalkURL,
-      onnxruntimeDirectoryURL: Bundle.module.resourceURL!.appending(path: "lib"),
+      onnxruntimeDirectoryURL: libURL,
       cpuNumThreads: cpuNumThreads
     )
   }
@@ -70,6 +82,16 @@ enum TestResources {
     )
   }
 
+  /// Verifies that the voice model containing singing styles exists.
+  ///
+  /// - Throws: Test failure if the voice model is not found
+  static func verifySongVoiceModelExists() throws {
+    try #require(
+      FileManager.default.fileExists(atPath: songVoiceModelURL.fileSystemPath),
+      "Song voice model not found at \(songVoiceModelURL.fileSystemPath). Run ./scripts/setup-voicevox-resources.sh"
+    )
+  }
+
   /// Verifies that a specific voice model exists.
   ///
   /// - Parameter id: The voice model ID to check
@@ -77,8 +99,8 @@ enum TestResources {
   static func verifyVoiceModelExists(id: Int) throws {
     let modelURL = voiceModelURL(id: id)
     #expect(
-      FileManager.default.fileExists(atPath: modelURL.path()),
-      "Voice model \(id) not found at \(modelURL.path())"
+      FileManager.default.fileExists(atPath: modelURL.fileSystemPath),
+      "Voice model \(id) not found at \(modelURL.fileSystemPath)"
     )
   }
 }

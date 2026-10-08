@@ -271,3 +271,41 @@ extension AudioQuery {
     self = try AudioQuery(from: Data(bytes: audioQueryJson, count: strlen(audioQueryJson)))
   }
 }
+
+// MARK: - Validation
+
+extension AudioQuery {
+  /// Validates the audio query with VOICEVOX Core.
+  ///
+  /// An audio query is invalid if any of its accent phrases is invalid.
+  /// VOICEVOX Core logs a warning when `outputSamplingRate` is not `24000`.
+  ///
+  /// - Throws: ``VOICEVOXError/invalidQuery(kind:reason:)`` if the audio query is invalid.
+  public func validate() throws(VOICEVOXError) {
+    try CoreJSON.validate(self, kind: .audioQuery) { voicevox_audio_query_validate($0) }
+  }
+}
+
+extension AudioQuery.AccentPhrase {
+  /// Validates the accent phrase with VOICEVOX Core.
+  ///
+  /// An accent phrase is invalid if any of its moras is invalid, or if `accent` is out of
+  /// the range of `moras`.
+  ///
+  /// - Throws: ``VOICEVOXError/invalidQuery(kind:reason:)`` if the accent phrase is invalid.
+  public func validate() throws(VOICEVOXError) {
+    try CoreJSON.validate(self, kind: .accentPhrase) { voicevox_accent_phrase_validate($0) }
+  }
+}
+
+extension AudioQuery.Mora {
+  /// Validates the mora with VOICEVOX Core.
+  ///
+  /// A mora is invalid if its phonemes are unknown, or if only one of `consonant` and
+  /// `consonantLength` is specified.
+  ///
+  /// - Throws: ``VOICEVOXError/invalidQuery(kind:reason:)`` if the mora is invalid.
+  public func validate() throws(VOICEVOXError) {
+    try CoreJSON.validate(self, kind: .mora) { voicevox_mora_validate($0) }
+  }
+}
