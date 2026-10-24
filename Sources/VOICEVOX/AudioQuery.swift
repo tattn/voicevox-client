@@ -266,7 +266,7 @@ extension AudioQuery {
       )
     }
 
-    defer { voicevox_json_free(audioQueryJson) }
+    defer { voicevox_string_free(audioQueryJson) }
 
     self = try AudioQuery(from: Data(bytes: audioQueryJson, count: strlen(audioQueryJson)))
   }

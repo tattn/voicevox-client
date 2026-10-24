@@ -10,7 +10,7 @@ public actor Synthesizer {
   /// The native synthesizer wrapper from VOICEVOX Core.
   private let synthesizer: CoreSynthesizer
 
-  /// The user dictionary
+  /// The user dictionary.
   public private(set) var userDictionary: UserDictionary?
 
   /// Creates and initializes a new synthesizer instance with the specified configuration.
@@ -120,7 +120,7 @@ public actor Synthesizer {
     }
 
     // Ensure proper cleanup of the allocated C string
-    defer { voicevox_json_free(jsonCString) }
+    defer { voicevox_string_free(jsonCString) }
 
     // Decode to Speaker array
     do {
@@ -404,5 +404,84 @@ extension Synthesizer {
     styleId: UInt32
   ) async throws(VOICEVOXError) -> Data {
     try synthesizer.synthesize(frameAudioQuery: frameAudioQuery, styleId: styleId)
+  }
+}
+
+// MARK: - Streaming Synthesis
+
+extension Synthesizer {
+  /// Creates an intermediate representation of speech for streaming synthesis.
+  ///
+  /// This finishes much faster than ``synthesize(audioQuery:styleId:options:)``.
+  /// Render the result bit by bit with ``render(_:frames:)``.
+  ///
+  /// - Parameters:
+  ///   - audioQuery: The audio query containing synthesis parameters.
+  ///   - styleId: The style ID of a ``Speaker/StyleType/streamingTalk`` style.
+  ///   - options: Additional synthesis options (defaults to standard options).
+  ///
+  /// - Returns: The audio feature to render.
+  ///
+  /// - Throws: `VOICEVOXError.invalidStyleId` if no loaded voice model has a `streaming_talk` style of `styleId`,
+  ///   `VOICEVOXError.invalidQuery` if the audio query is invalid,
+  ///   or `VOICEVOXError.synthesisFailed` if the creation fails.
+  public func createAudioFeature(
+    audioQuery: AudioQuery,
+    styleId: UInt32,
+    options: VoicevoxSynthesisOptions = voicevox_make_default_synthesis_options()
+  ) async throws(VOICEVOXError) -> AudioFeature {
+    try synthesizer.createAudioFeature(audioQuery: audioQuery, styleId: styleId, options: options)
+  }
+
+  /// Renders a range of frames of an audio feature.
+  ///
+  /// Concatenating the results of consecutive ranges gives the PCM of the whole speech.
+  ///
+  /// - Parameters:
+  ///   - audioFeature: The audio feature created by ``createAudioFeature(audioQuery:styleId:options:)``.
+  ///   - frames: The range of frames to render. It must be within `0...audioFeature.frameLength`.
+  ///
+  /// - Returns: 16-bit little-endian PCM without a WAV header, in the sampling rate and channels of the audio query.
+  ///
+  /// - Throws: `VOICEVOXError.synthesisFailed` if the range is out of bounds or the rendering fails.
+  public func render(_ audioFeature: AudioFeature, frames: Range<Int>) async throws(VOICEVOXError) -> Data {
+    try synthesizer.render(audioFeature, frames: frames)
+  }
+
+  /// Synthesizes speech segment by segment, so that playback can start before the whole speech is synthesized.
+  ///
+  /// Segments are rendered ahead of the consumer, so a slow consumer does not delay rendering.
+  ///
+  /// - Parameters:
+  ///   - audioQuery: The audio query containing synthesis parameters.
+  ///   - styleId: The style ID of a ``Speaker/StyleType/streamingTalk`` style.
+  ///   - segmentFrameLength: The number of frames rendered at once. Defaults to 28 frames (about 0.3 seconds).
+  ///   - options: Additional synthesis options (defaults to standard options).
+  ///
+  /// - Returns: A stream of 16-bit little-endian PCM segments without a WAV header.
+  ///   It finishes with ``VOICEVOXError`` if the synthesis fails.
+  nonisolated public func streamingSynthesis(
+    audioQuery: AudioQuery,
+    styleId: UInt32,
+    segmentFrameLength: Int = 28,
+    options: VoicevoxSynthesisOptions = voicevox_make_default_synthesis_options()
+  ) -> AsyncThrowingStream<Data, any Error> {
+    precondition(segmentFrameLength > 0, "segmentFrameLength must be positive")
+    return AsyncThrowingStream { continuation in
+      let task = Task {
+        do {
+          let audioFeature = try await createAudioFeature(audioQuery: audioQuery, styleId: styleId, options: options)
+          for start in stride(from: 0, to: audioFeature.frameLength, by: segmentFrameLength) {
+            try Task.checkCancellation()
+            let end = min(start + segmentFrameLength, audioFeature.frameLength)
+            continuation.yield(try await render(audioFeature, frames: start..<end))
+          }
+          continuation.finish()
+        } catch {
+          continuation.finish(throwing: error)
+        }
+      }
+      continuation.onTermination = { _ in task.cancel() }
+    }
   }
 }

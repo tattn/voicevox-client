@@ -190,7 +190,7 @@ final class CoreSynthesizer {
       )
     }
 
-    defer { voicevox_wav_free(wavBuffer) }
+    defer { voicevox_bytes_free(wavBuffer) }
     return Data(bytes: wavBuffer, count: Int(wavLength))
   }
 
@@ -216,7 +216,7 @@ final class CoreSynthesizer {
 
     // Call C API to replace mora data
     let updatedAccentPhrasesJson = try replaceMoraDataCore(accentPhrasesJson: accentPhrasesJson, styleId: styleId)
-    defer { voicevox_json_free(updatedAccentPhrasesJson) }
+    defer { voicevox_string_free(updatedAccentPhrasesJson) }
 
     // Decode and return updated audio query
     let updatedAccentPhrases = try decodeAccentPhrases(from: updatedAccentPhrasesJson, styleId: styleId)
@@ -252,7 +252,7 @@ final class CoreSynthesizer {
       )
     }
 
-    defer { voicevox_json_free(audioQueryJson) }
+    defer { voicevox_string_free(audioQueryJson) }
     return try AudioQuery(from: Data(bytes: audioQueryJson, count: strlen(audioQueryJson)))
   }
 
@@ -280,7 +280,7 @@ final class CoreSynthesizer {
       )
     }
 
-    defer { voicevox_json_free(accentPhrasesJson) }
+    defer { voicevox_string_free(accentPhrasesJson) }
     return try decodeAccentPhrases(from: accentPhrasesJson, styleId: styleId)
   }
 
@@ -317,7 +317,7 @@ final class CoreSynthesizer {
       )
     }
 
-    defer { voicevox_wav_free(wavBuffer) }
+    defer { voicevox_bytes_free(wavBuffer) }
     return Data(bytes: wavBuffer, count: Int(wavLength))
   }
 

@@ -82,8 +82,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "voicevox_core_ios",
-      url: "https://github.com/VOICEVOX/voicevox_core/releases/download/0.17.0/voicevox_core-xcframework-0.17.0.zip",
-      checksum: "e634b0fd7e09924a4c9c4f6e8b5c0da0790a7649d89f289cbcad1b97976212be"
+      url: "https://github.com/VOICEVOX/voicevox_core/releases/download/0.17.1/voicevox_core-xcframework-0.17.1.zip",
+      checksum: "d01e1d511895944a86857d736bc0e0a1a079a4ed68f985477f4f327bdb22ec61"
     ),
   ]
 )

@@ -306,7 +306,7 @@ public final class UserDictionary: @unchecked Sendable {
         )
       }
 
-      defer { voicevox_json_free(jsonPtr) }
+      defer { voicevox_string_free(jsonPtr) }
       return Data(bytes: jsonPtr, count: strlen(jsonPtr))
     }
   }

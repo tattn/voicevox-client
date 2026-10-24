@@ -114,9 +114,15 @@ let score = Score(notes: [
 ])
 let frameAudioQuery = try await synthesizer.createSingFrameAudioQuery(score: score, styleId: 6000)
 let singingData = try await synthesizer.synthesize(frameAudioQuery: frameAudioQuery, styleId: 3000)
+
+// Streaming synthesis (requires a voice model with streaming_talk styles, VOICEVOX VVM 0.17.0 or later)
+let audioQuery = try await synthesizer.makeAudioQuery(text: "こんにちは", styleId: 0)
+for try await pcm in synthesizer.streamingSynthesis(audioQuery: audioQuery, styleId: 0) {
+    // 16-bit little-endian PCM without a WAV header
+}
 ```
 
-This library uses VOICEVOX Core 0.17.0 with ONNX Runtime 1.17.3.
+This library uses VOICEVOX Core 0.17.1 with ONNX Runtime 1.17.3.
 
 ## Example App Setup
 

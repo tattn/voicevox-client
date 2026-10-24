@@ -98,7 +98,7 @@ extension CoreSynthesizer {
       throw songError(resultCode: resultCode, styleId: styleId, operation: "synthesize singing voice")
     }
 
-    defer { voicevox_wav_free(wavBuffer) }
+    defer { voicevox_bytes_free(wavBuffer) }
     return Data(bytes: wavBuffer, count: Int(wavLength))
   }
 

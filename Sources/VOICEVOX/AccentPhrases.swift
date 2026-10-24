@@ -107,6 +107,6 @@ final class AccentPhrases {
   }
 
   deinit {
-    voicevox_json_free(pointer)
+    voicevox_string_free(pointer)
   }
 }

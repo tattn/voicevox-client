@@ -94,7 +94,7 @@ final class VoiceModelFile {
         reason: "Failed to retrieve speaker metadata from voice model file"
       )
     }
-    defer { voicevox_json_free(jsonCString) }
+    defer { voicevox_string_free(jsonCString) }
 
     do {
       return try JSONDecoder().decode([Speaker].self, from: Data(bytes: jsonCString, count: strlen(jsonCString)))

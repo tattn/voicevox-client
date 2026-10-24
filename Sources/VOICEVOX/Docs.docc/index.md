@@ -115,6 +115,29 @@ After editing the phonemes of a `FrameAudioQuery`, regenerate the fundamental fr
 
 The available operations of a style are given by `Speaker.Style.styleType`.
 
+### Streaming Synthesis
+
+Streaming synthesis renders speech segment by segment, so playback can start shortly after synthesis begins. It requires a voice model with `streaming_talk` styles (`vvm_format_version` 2, distributed from VOICEVOX VVM 0.17.0).
+
+```swift
+let audioQuery = try await synthesizer.makeAudioQuery(text: "こんにちは", styleId: 0)
+
+// Each element is 16-bit little-endian PCM without a WAV header
+for try await pcm in synthesizer.streamingSynthesis(audioQuery: audioQuery, styleId: 0) {
+    player.enqueue(pcm, sampleRate: audioQuery.outputSamplingRate)
+}
+```
+
+To control how speech is divided, create an `AudioFeature` and render any range of its frames:
+
+```swift
+let audioFeature = try await synthesizer.createAudioFeature(audioQuery: audioQuery, styleId: 0)
+let firstSecond = try await synthesizer.render(
+    audioFeature,
+    frames: 0..<min(Int(AudioFeature.frameRate), audioFeature.frameLength)
+)
+```
+
 ### Custom Pronunciation with User Dictionary
 
 The `UserDictionary` class allows you to register custom words with specific pronunciations and accent patterns. This is particularly useful for proper nouns, technical terms, or any words that may not be in the standard dictionary.

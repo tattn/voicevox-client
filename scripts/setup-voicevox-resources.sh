@@ -44,9 +44,9 @@ voicevox_release_arch() {
     esac
 }
 
-VOICEVOX_CORE_VERSION="0.17.0"
+VOICEVOX_CORE_VERSION="0.17.1"
 ONNXRUNTIME_VERSION="1.17.3"
-MODELS_VERSION="0.16.4"
+MODELS_VERSION="0.17.0"
 
 # Check if resources already exist
 VVMS_DIR="./Example/VOICEVOXExample/lib/vvms"

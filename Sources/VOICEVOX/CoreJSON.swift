@@ -21,7 +21,7 @@ enum CoreJSON {
     from jsonPointer: UnsafeMutablePointer<CChar>,
     orThrow makeError: (String) -> VOICEVOXError
   ) throws(VOICEVOXError) -> T {
-    defer { voicevox_json_free(jsonPointer) }
+    defer { voicevox_string_free(jsonPointer) }
     do {
       return try JSONDecoder().decode(type, from: Data(bytes: jsonPointer, count: strlen(jsonPointer)))
     } catch {

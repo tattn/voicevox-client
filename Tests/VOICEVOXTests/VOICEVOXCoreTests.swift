@@ -140,7 +140,7 @@ struct VOICEVOXCoreTests {
       for style in speaker.styles {
         #expect(!style.name.isEmpty, "Style name should not be empty")
         #expect(!style.type.isEmpty, "Style type should not be empty")
-        #expect(style.styleType == .talk)
+        #expect(style.styleType == .streamingTalk)
       }
     }
 

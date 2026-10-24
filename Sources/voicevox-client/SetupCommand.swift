@@ -14,7 +14,7 @@ struct Setup: AsyncParsableCommand {
   var output: String?
 
   @Option(name: .long, help: "VOICEVOX Core version")
-  var version: String = "0.17.0"
+  var version: String = "0.17.1"
 
   private static let onnxruntimeVersion = "1.17.3"
 
